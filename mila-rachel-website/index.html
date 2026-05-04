@@ -369,6 +369,7 @@ let alertTimer = null;
 let showSimecol = false;
 
 const ALERT_HOURS = 4;
+const NEXT_FEEDING_HOURS = 3;
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
 function nowIso(){return new Date().toISOString();}
@@ -657,7 +658,7 @@ function updateAlert(){
 
   const mins=Math.floor((Date.now()-new Date(lastF.time))/60000);
   const hours=mins/60;
-  const totalMins=ALERT_HOURS*60;
+  const totalMins=NEXT_FEEDING_HOURS*60;
   const pct=Math.min(100,Math.round((mins/totalMins)*100));
 
   // שעון חי
@@ -676,7 +677,7 @@ function updateAlert(){
     const hl=Math.floor(minsLeft/60),ml=minsLeft%60;
     document.getElementById("timer-next").textContent=`עוד ${hl>0?hl+" ש' ":""}${ml} דק' להאכלה הבאה`;
   } else {
-    document.getElementById("timer-next").textContent="⚠️ עבר הזמן!";
+    document.getElementById("timer-next").textContent="⏰ הגיע זמן האכלה!";
   }
   timer.className="show";timer.style.display="";
 
