@@ -1,668 +1,1024 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>מילה רחל 🌸</title>
-  <meta name="apple-mobile-web-app-capable" content="yes"/>
-  <meta name="apple-mobile-web-app-title" content="מילה רחל"/>
-  <meta name="theme-color" content="#F9A8C9"/>
-  <style>
-    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-    body{background:#FFF8F5;font-family:'Segoe UI','Arial Hebrew',Arial,sans-serif;}
-    #root{max-width:480px;margin:0 auto;min-height:100vh;}
-    @keyframes spin{to{transform:rotate(360deg)}}
-    @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.82}}
-    @keyframes slideUp{from{transform:translateY(60px);opacity:0}to{transform:translateY(0);opacity:1}}
-  </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="מילה רחל"/>
+<meta name="theme-color" content="#F9A8C9"/>
+<title>מילה רחל 🌸</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{background:#FFF8F5;font-family:'Segoe UI','Arial Hebrew',Arial,sans-serif;max-width:480px;margin:0 auto;min-height:100vh;padding-bottom:80px;}
+button{font-family:inherit;cursor:pointer;border:none;}
+input,textarea{font-family:inherit;outline:none;}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.82}}
+@keyframes slideUp{from{transform:translateY(60px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+/* NAV */
+#nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:#fff;border-top:2px solid #F9A8C9;display:flex;justify-content:space-around;padding:8px 0 16px;z-index:100;box-shadow:0 -4px 20px rgba(0,0,0,.07);}
+.nav-btn{background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:2px;opacity:.4;transition:all .2s;padding:0 8px;}
+.nav-btn.active{opacity:1;transform:scale(1.1);}
+.nav-btn span:first-child{font-size:22px;}
+.nav-btn span:last-child{font-size:10px;font-weight:700;color:#3D2B4F;}
+
+/* HEADER */
+#header{background:linear-gradient(135deg,#F9A8C9,#C5B4E8);padding:22px 20px 16px;border-radius:0 0 32px 32px;text-align:center;position:relative;box-shadow:0 4px 20px rgba(61,43,79,.1);}
+#header h1{font-size:24px;font-weight:900;color:#fff;margin-top:4px;}
+#header .status{font-size:12px;color:rgba(255,255,255,.85);margin-top:3px;min-height:18px;}
+#sync-btn{position:absolute;left:14px;top:18px;background:rgba(255,255,255,.25);border:none;border-radius:10px;padding:6px 10px;font-size:16px;}
+
+/* ALERT */
+#alert-banner{margin:12px 16px 0;border-radius:18px;padding:14px 18px;display:none;align-items:center;gap:12px;animation:pulse 2s infinite;}
+#alert-banner.show{display:flex;}
+#alert-banner.warn{background:#FFB347;box-shadow:0 4px 20px rgba(255,179,71,.4);}
+#alert-banner.urgent{background:#FF6B6B;box-shadow:0 4px 20px rgba(255,107,107,.4);}
+#alert-banner .alert-icon{font-size:32px;}
+#alert-banner .alert-text{flex:1;}
+#alert-banner .alert-title{font-weight:900;color:#fff;font-size:15px;}
+#alert-banner .alert-sub{font-size:12px;color:rgba(255,255,255,.85);margin-top:2px;}
+
+/* PAGES */
+.page{padding:16px 16px 20px;display:none;}
+.page.active{display:block;}
+
+/* STAT CARDS */
+.stats{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:20px;}
+.stat-card{border-radius:14px;padding:10px 4px;text-align:center;}
+.stat-card .emoji{font-size:18px;}
+.stat-card .val{font-size:18px;font-weight:900;color:#3D2B4F;}
+.stat-card .lbl{font-size:10px;color:#9B8AAD;font-weight:600;}
+
+/* SECTION */
+.section{margin-bottom:22px;}
+.section-title{font-size:15px;font-weight:900;color:#3D2B4F;margin-bottom:12px;}
+
+/* ENTRY ROW */
+.entry-row{border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:12px;margin-bottom:8px;border:1.5px solid;}
+.entry-row .entry-emoji{font-size:24px;}
+.entry-row .entry-info{flex:1;}
+.entry-row .entry-label{font-weight:800;color:#3D2B4F;font-size:14px;}
+.entry-row .entry-sub{font-size:13px;color:#9B8AAD;font-weight:600;}
+.entry-row .entry-by{font-size:11px;color:#C5B4E8;font-weight:700;margin-top:2px;}
+.entry-row .entry-time{display:flex;flex-direction:column;align-items:flex-end;gap:2px;}
+.entry-row .entry-time .t{font-size:13px;font-weight:800;color:#3D2B4F;}
+.entry-row .entry-time .ago{font-size:11px;color:#9B8AAD;}
+.entry-row .entry-time .edit{font-size:11px;color:#C5B4E8;font-weight:700;}
+.entry-row.clickable{cursor:pointer;}
+
+/* ACTION BTNS */
+.action-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.action-btn{border-radius:18px;padding:20px 10px;display:flex;flex-direction:column;align-items:center;gap:8px;width:100%;border:2px solid;}
+.action-btn .a-emoji{font-size:36px;}
+.action-btn .a-label{font-size:16px;font-weight:800;color:#3D2B4F;}
+
+/* VIT BTNS */
+.vit-row{display:flex;gap:10px;}
+.vit-btn{flex:1;border-radius:16px;padding:12px 6px;display:flex;flex-direction:column;align-items:center;gap:3px;border:2px solid;transition:all .2s;position:relative;}
+.vit-btn .v-emoji{font-size:24px;}
+.vit-btn .v-label{font-size:11px;font-weight:800;color:#3D2B4F;}
+.vit-btn .v-status{font-size:10px;font-weight:700;color:#9B8AAD;}
+.vit-btn.done .v-status{color:#3D2B4F;}
+.vit-btn .v-count{position:absolute;top:4px;left:4px;background:#FF6B6B;color:#fff;border-radius:10px;font-size:9px;font-weight:900;padding:1px 5px;}
+
+/* SHEET / MODAL */
+#overlay{position:fixed;inset:0;background:rgba(61,43,79,.38);z-index:200;display:none;align-items:flex-end;justify-content:center;}
+#overlay.show{display:flex;}
+#sheet{background:#fff;border-radius:28px 28px 0 0;padding:24px 20px 44px;width:100%;max-width:480px;box-shadow:0 -8px 40px rgba(0,0,0,.13);max-height:92vh;overflow-y:auto;animation:slideUp .25s ease;}
+.sheet-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;}
+.sheet-title{font-size:19px;font-weight:900;color:#3D2B4F;}
+.sheet-close{background:#f0eaf7;border:none;border-radius:10px;width:34px;height:34px;font-size:17px;}
+
+/* QUICK PICKER */
+.quick-grid{display:grid;gap:10px;margin-bottom:14px;}
+.quick-grid.cols3{grid-template-columns:repeat(3,1fr);}
+.quick-grid.cols2{grid-template-columns:1fr 1fr;}
+.quick-btn{border-radius:14px;padding:14px 6px;font-weight:900;font-size:17px;color:#3D2B4F;border:2px solid;display:flex;flex-direction:column;align-items:center;}
+.quick-btn .unit{font-size:11px;font-weight:600;color:#9B8AAD;margin-top:2px;}
+.big-btn{border-radius:18px;padding:22px 10px;display:flex;flex-direction:column;align-items:center;gap:8px;width:100%;border:2px solid;}
+.big-btn .b-emoji{font-size:34px;}
+.big-btn .b-label{font-size:16px;font-weight:800;color:#3D2B4F;}
+
+/* INPUTS */
+.lbl{font-size:13px;font-weight:700;color:#9B8AAD;margin-bottom:8px;}
+.inp{width:100%;padding:12px 14px;border-radius:12px;border:2px solid #C5B4E8;font-size:15px;color:#3D2B4F;background:#FFF8F5;}
+textarea.inp{resize:vertical;}
+.inp-row{display:flex;gap:10px;}
+
+/* SAVE BTN */
+.save-btn{width:100%;margin-top:18px;padding:14px;border-radius:16px;background:linear-gradient(135deg,#F9A8C9,#C5B4E8);border:none;font-size:16px;font-weight:900;color:#fff;}
+.del-btn{width:100%;margin-top:10px;padding:12px;border-radius:14px;background:#fff0f0;border:1.5px solid #FF6B6B;font-size:14px;font-weight:700;color:#FF6B6B;}
+.confirm-del{margin-top:10px;background:#fff0f0;border-radius:14px;padding:14px;border:1.5px solid #FF6B6B;}
+.confirm-del .q{text-align:center;font-weight:700;color:#FF6B6B;margin-bottom:12px;font-size:14px;}
+.confirm-row{display:flex;gap:10px;}
+.yes-btn{flex:1;padding:11px;border-radius:12px;background:#FF6B6B;border:none;font-size:14px;font-weight:900;color:#fff;}
+.no-btn{flex:1;padding:11px;border-radius:12px;background:#FFF8F5;border:1.5px solid #9B8AAD;font-size:14px;font-weight:700;color:#9B8AAD;}
+
+/* WHO BTNS */
+.who-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+.who-btn{background:rgba(197,180,232,.27);border:2.5px solid #C5B4E8;border-radius:18px;padding:22px 10px;display:flex;flex-direction:column;align-items:center;gap:8px;}
+.who-btn .who-emoji{font-size:34px;}
+.who-btn .who-name{font-size:18px;font-weight:900;color:#3D2B4F;}
+.other-btn{width:100%;padding:14px;border-radius:16px;background:#FFF8F5;border:2px solid #9B8AAD;font-size:16px;font-weight:800;color:#9B8AAD;}
+.custom-name-box{background:rgba(197,180,232,.13);border:2px solid #C5B4E8;border-radius:16px;padding:16px;}
+
+/* FILTER CHIPS */
+.filter-row{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;}
+.chip{padding:7px 12px;border-radius:20px;border:2px solid #C5B4E8;background:rgba(197,180,232,.13);font-weight:700;font-size:12px;color:#3D2B4F;}
+.chip.active{background:#C5B4E8;}
+
+/* MEDICAL */
+.med-tabs{display:flex;gap:10px;margin-bottom:20px;}
+.med-tab{flex:1;padding:10px;border-radius:14px;border:2px solid;font-weight:800;font-size:14px;color:#3D2B4F;}
+.record-card{background:#fff;border-radius:16px;padding:14px 16px;margin-bottom:10px;box-shadow:0 2px 10px rgba(61,43,79,.1);}
+.record-card .rc-title{font-weight:900;color:#3D2B4F;font-size:15px;}
+.record-card .rc-sub{font-size:12px;color:#9B8AAD;margin-top:2px;}
+.record-actions{display:flex;gap:6px;}
+.edit-sm{background:rgba(197,180,232,.2);border:1px solid #C5B4E8;border-radius:8px;padding:4px 8px;font-size:12px;}
+.del-sm{background:#fff0f0;border:1px solid #FF6B6B;border-radius:8px;padding:4px 8px;font-size:12px;color:#FF6B6B;}
+.med-type-row{display:flex;gap:8px;margin-bottom:16px;}
+.med-type-btn{flex:1;padding:10px 4px;border-radius:12px;border:2px solid #D4A8F9;background:rgba(212,168,249,.13);font-weight:800;font-size:12px;color:#3D2B4F;display:flex;flex-direction:column;align-items:center;gap:3px;}
+.med-type-btn.active{background:#D4A8F9;}
+.freq-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+.freq-btn{padding:7px 12px;border-radius:10px;border:1.5px solid #C5B4E8;background:rgba(197,180,232,.13);font-size:12px;font-weight:700;color:#3D2B4F;}
+.freq-btn.active{background:#C5B4E8;}
+
+/* TOAST */
+#toast{position:fixed;bottom:95px;left:50%;transform:translateX(-50%);background:#3D2B4F;color:#fff;border-radius:20px;padding:10px 26px;font-size:15px;font-weight:700;z-index:999;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.2);display:none;}
+#toast.show{display:block;}
+
+/* LOADER */
+#loader{position:fixed;inset:0;background:linear-gradient(135deg,#F9A8C9,#C5B4E8,#9EDFCC);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:500;}
+#loader .spin{width:36px;height:36px;border:4px solid rgba(255,255,255,.3);border-top:4px solid #fff;border-radius:50%;animation:spin .9s linear infinite;margin-top:20px;}
+
+/* VIT HISTORY */
+.vit-history-row{display:flex;align-items:center;justify-content:space-between;background:#fff;border-radius:14px;padding:12px 16px;margin-bottom:8px;box-shadow:0 2px 10px rgba(61,43,79,.1);}
+.vit-icons{display:flex;gap:12px;align-items:center;}
+.vit-icons .vi{display:flex;flex-direction:column;align-items:center;}
+.vit-icons .vi span{font-size:18px;}
+.vit-icons .vi small{font-size:9px;font-weight:700;color:#9B8AAD;}
+
+/* PERFORMER EDIT ROW */
+.performer-btns{display:flex;gap:8px;margin-bottom:8px;}
+.perf-btn{flex:1;padding:10px 6px;border-radius:12px;border:2px solid #C5B4E8;background:rgba(197,180,232,.13);font-weight:800;font-size:14px;color:#3D2B4F;}
+.perf-btn.active{background:#C5B4E8;}
+
+.empty{text-align:center;color:#9B8AAD;padding:30px 0;font-size:15px;}
+.add-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.add-header .title{font-size:15px;font-weight:900;color:#3D2B4F;}
+.add-header .add-btn{border:none;border-radius:12px;padding:8px 16px;font-size:14px;font-weight:800;color:#fff;}
+</style>
 </head>
 <body>
-<div id="root"></div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+<!-- LOADER -->
+<div id="loader">
+  <div style="font-size:72px">🌸</div>
+  <div style="font-size:28px;font-weight:900;color:#fff;margin-top:12px">מילה רחל</div>
+  <div style="font-size:14px;color:rgba(255,255,255,.8);margin-top:6px">טוען נתונים...</div>
+  <div class="spin"></div>
+</div>
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDuB5kM88GDkSneYqEUrIt5PB_4onuqGzM",
-  authDomain: "mila-rachel.firebaseapp.com",
-  databaseURL: "https://mila-rachel-default-rtdb.firebaseio.com",
-  projectId: "mila-rachel",
-  storageBucket: "mila-rachel.firebasestorage.app",
-  messagingSenderId: "975318103287",
-  appId: "1:975318103287:web:db4883c104bf7494290ff2"
+<!-- HEADER -->
+<div id="header">
+  <div style="font-size:32px">🌸</div>
+  <h1>מילה רחל</h1>
+  <div class="status" id="save-status">👨‍👩‍👧 יומן משפחתי</div>
+  <button id="sync-btn" onclick="syncNow()">🔄</button>
+</div>
+
+<!-- ALERT -->
+<div id="alert-banner">
+  <div class="alert-icon">🍼</div>
+  <div class="alert-text">
+    <div class="alert-title" id="alert-title">🔔 זמן האכלה!</div>
+    <div class="alert-sub" id="alert-sub"></div>
+  </div>
+</div>
+
+<!-- HOME PAGE -->
+<div id="page-home" class="page active">
+  <div class="stats" id="stats-row"></div>
+  <div class="section">
+    <div class="section-title">אחרון שנרשם 🕐</div>
+    <div id="last-feeding-row"></div>
+    <div id="last-diaper-row"></div>
+  </div>
+  <div class="section">
+    <div class="section-title">הוספה מהירה ✏️</div>
+    <div class="action-grid">
+      <button class="action-btn" style="background:rgba(249,168,201,.2);border-color:#F9A8C9" onclick="openSheet('feeding-type')">
+        <span class="a-emoji">🍼</span><span class="a-label">האכלה</span>
+      </button>
+      <button class="action-btn" style="background:rgba(158,223,204,.2);border-color:#9EDFCC" onclick="openSheet('diaper')">
+        <span class="a-emoji">👶</span><span class="a-label">חיתול</span>
+      </button>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-title">ויטמינים היום 💊</div>
+    <div class="vit-row" id="home-vit-row"></div>
+  </div>
+  <div class="section" id="meds-quick-section" style="display:none">
+    <div class="section-title">תרופות קבועות 💊</div>
+    <div id="meds-quick-list"></div>
+  </div>
+</div>
+
+<!-- HISTORY PAGE -->
+<div id="page-history" class="page">
+  <div class="filter-row" id="history-filters"></div>
+  <div id="history-list"></div>
+</div>
+
+<!-- VITAMINS PAGE -->
+<div id="page-vitamins" class="page">
+  <div class="section">
+    <div class="section-title">היום</div>
+    <div class="vit-row" id="vit-today-row"></div>
+    <div id="simecol-picker" style="display:none;margin-top:12px;background:rgba(168,216,249,.13);border:2px solid #A8D8F9;border-radius:18px;padding:16px 14px;">
+      <div class="lbl">כמות סימיקול (ניתן מספר פעמים):</div>
+      <div class="quick-grid cols3" style="margin-top:8px">
+        <button class="quick-btn" style="background:rgba(168,216,249,.27);border-color:#A8D8F9" onclick="giveSimecol(0.2)">0.2<span class="unit">מ״ל</span></button>
+        <button class="quick-btn" style="background:rgba(168,216,249,.27);border-color:#A8D8F9" onclick="giveSimecol(0.3)">0.3<span class="unit">מ״ל</span></button>
+        <button class="quick-btn" style="background:rgba(168,216,249,.27);border-color:#A8D8F9" onclick="giveSimecol(0.4)">0.4<span class="unit">מ״ל</span></button>
+      </div>
+      <div class="inp-row" style="margin-top:8px">
+        <input class="inp" type="number" step="0.1" id="simecol-custom" placeholder="כמות אחרת..."/>
+        <button style="background:#A8D8F9;border:none;border-radius:12px;padding:11px 16px;font-size:17px;font-weight:900" onclick="giveSimecol(parseFloat(document.getElementById('simecol-custom').value))">✅</button>
+      </div>
+    </div>
+    <div id="simecol-count-label" style="font-size:12px;color:#A8D8F9;text-align:center;margin-top:6px;font-weight:700;display:none"></div>
+  </div>
+  <div class="section">
+    <div class="section-title">14 ימים אחרונים</div>
+    <div id="vit-history"></div>
+  </div>
+</div>
+
+<!-- MEDICAL PAGE -->
+<div id="page-medical" class="page">
+  <div class="med-tabs">
+    <button class="med-tab active" id="med-tab-records" style="border-color:#A8F0E8;background:rgba(168,240,232,.2)" onclick="switchMedTab('records')">🩺 בדיקות</button>
+    <button class="med-tab" id="med-tab-meds" style="border-color:#D4A8F9;background:rgba(212,168,249,.07)" onclick="switchMedTab('meds')">💊 תרופות</button>
+  </div>
+  <div id="medical-records-view">
+    <div class="add-header">
+      <div class="title">יומן בדיקות 🩺</div>
+      <button class="add-btn" style="background:linear-gradient(135deg,#A8F0E8,#9EDFCC);color:#3D2B4F" onclick="openSheet('record-form',null)">+ הוסף</button>
+    </div>
+    <div id="future-records"></div>
+    <div id="past-records"></div>
+  </div>
+  <div id="medical-meds-view" style="display:none">
+    <div class="add-header">
+      <div class="title">תרופות ומשחות 🧴</div>
+      <button class="add-btn" style="background:linear-gradient(135deg,#D4A8F9,#C5B4E8)" onclick="openSheet('med-form',null)">+ הוסף</button>
+    </div>
+    <div id="meds-list"></div>
+  </div>
+</div>
+
+<!-- SHEET / MODAL -->
+<div id="overlay" onclick="overlayClick(event)">
+  <div id="sheet"></div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- NAV -->
+<nav id="nav">
+  <button class="nav-btn active" id="nav-home" onclick="goTab('home')"><span>🏠</span><span>בית</span></button>
+  <button class="nav-btn" id="nav-history" onclick="goTab('history')"><span>📋</span><span>היסטוריה</span></button>
+  <button class="nav-btn" id="nav-vitamins" onclick="goTab('vitamins')"><span>💊</span><span>ויטמינים</span></button>
+  <button class="nav-btn" id="nav-medical" onclick="goTab('medical')"><span>🏥</span><span>רפואי</span></button>
+</nav>
+
+<!-- FIREBASE -->
+<!-- Firebase compat (works on all browsers including Safari) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+const cfg = {
+  apiKey:"AIzaSyDuB5kM88GDkSneYqEUrIt5PB_4onuqGzM",
+  authDomain:"mila-rachel.firebaseapp.com",
+  databaseURL:"https://mila-rachel-default-rtdb.firebaseio.com",
+  projectId:"mila-rachel",
+  storageBucket:"mila-rachel.firebasestorage.app",
+  messagingSenderId:"975318103287",
+  appId:"1:975318103287:web:db4883c104bf7494290ff2"
 };
+firebase.initializeApp(cfg);
+const db = firebase.database();
+const DR = "mila_family_v2";
 
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-const DB_REF = "mila_family_data";
-
-window._fbLoad = async function(){
+window._load = async function(){
   try{
-    const snap = await get(ref(db, DB_REF));
-    if(snap.exists()){
-      const d = snap.val();
-      if(d && Array.isArray(d.entries)) return d;
-    }
-  }catch(e){console.error("FB load",e);}
+    const s = await db.ref(DR).get();
+    if(s.exists()){const d=s.val();if(d&&Array.isArray(d.entries))return d;}
+  }catch(e){console.error("load error",e);}
   return {entries:[],vitamins:{},medicalRecords:[],medicines:[]};
 };
-
-window._fbSave = async function(data){
-  try{ await set(ref(db, DB_REF), data); return true; }
-  catch(e){ console.error("FB save",e); return false; }
+window._save = async function(data){
+  try{await db.ref(DR).set(data);return true;}catch(e){console.error("save error",e);return false;}
 };
-
-window._fbReady = true;
+window._fbReady=true;
 window.dispatchEvent(new Event("fb-ready"));
 </script>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<script>
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let DATA = {entries:[],vitamins:{},medicalRecords:[],medicines:[]};
+let pendingEntry = null;
+let currentEditEntry = null;
+let currentTab = "home";
+let histFilter = "all";
+let medTab = "records";
+let saveTimer = null;
+let alertTimer = null;
+let showSimecol = false;
 
-<script type="text/babel" data-presets="react">
-const {useState, useEffect, useRef} = React;
 const ALERT_HOURS = 4;
 
-
-const CLOUD_KEY = "mila_rachel_2024_family";
-
-// 👇 כדי להוסיף תמונה: העלה את התמונה ל-https://imgbb.com
-// ולאחר מכן החלף את הכתובת כאן:
-const MILA_PHOTO_URL = "https://i.ibb.co/placeholder/mila.jpg";
-
-const C = {
-  bg:"#FFF8F5", pink:"#F9A8C9", lavender:"#C5B4E8", mint:"#9EDFCC",
-  peach:"#FFCBA4", yellow:"#FFE99A", blue:"#A8D8F9", purple:"#D4A8F9",
-  teal:"#A8F0E8", orange:"#FFB347",
-  text:"#3D2B4F", soft:"#9B8AAD", white:"#FFFFFF",
-  shadow:"rgba(61,43,79,0.10)", red:"#FF6B6B",
-};
-
+// ── HELPERS ───────────────────────────────────────────────────────────────────
 function nowIso(){return new Date().toISOString();}
 function todayStr(){return new Date().toISOString().slice(0,10);}
 function timeAgo(iso){
-  const diff=Math.floor((Date.now()-new Date(iso))/60000);
-  if(diff<1)return "עכשיו";
-  if(diff<60)return `לפני ${diff} דק'`;
-  const h=Math.floor(diff/60),m=diff%60;
-  return m===0?`לפני ${h} ש'`:`לפני ${h} ש' ${m} דק'`;
+  const d=Math.floor((Date.now()-new Date(iso))/60000);
+  if(d<1)return"עכשיו";if(d<60)return`לפני ${d} דק'`;
+  const h=Math.floor(d/60),m=d%60;return m===0?`לפני ${h} ש'`:`לפני ${h} ש' ${m} דק'`;
 }
-function formatTime(iso){return new Date(iso).toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"});}
-function formatFullDate(iso){return new Date(iso).toLocaleDateString("he-IL",{day:"numeric",month:"long",year:"numeric"});}
-function toTimeInput(iso){const d=new Date(iso);return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");}
-function applyTimeToIso(orig,t){const [h,m]=t.split(":").map(Number),d=new Date(orig);d.setHours(h,m,0,0);return d.toISOString();}
-function formatDateLabel(ds){
-  if(ds===todayStr())return "היום";
+function fmtTime(iso){return new Date(iso).toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"});}
+function fmtDate(ds){
+  if(ds===todayStr())return"היום";
   const y=new Date();y.setDate(y.getDate()-1);
-  if(ds===y.toISOString().slice(0,10))return "אתמול";
+  if(ds===y.toISOString().slice(0,10))return"אתמול";
   return new Date(ds+"T12:00:00").toLocaleDateString("he-IL",{weekday:"long",day:"numeric",month:"long"});
 }
+function fmtFullDate(ds){return new Date(ds+"T12:00:00").toLocaleDateString("he-IL",{day:"numeric",month:"long",year:"numeric"});}
+function isFuture(ds){return ds>todayStr();}
 
-async function cloudLoad(){
-  if(!window._fbLoad) return {entries:[],vitamins:{},medicalRecords:[],medicines:[]};
-  try{return await window._fbLoad();}catch(e){return {entries:[],vitamins:{},medicalRecords:[],medicines:[]};}
+function entryEmoji(e){
+  if(e.category==="vitamin")return e.key==="simecol"?"🔵":e.key==="vitD"?"☀️":"🩸";
+  if(e.category==="medicine")return e.medType==="משחה"?"🧴":e.medType==="טיפות"?"💧":"💊";
+  if(e.category==="feeding")return e.type==="breast"?"🤱":e.type==="pump"?"🫙":"🍼";
+  return e.type==="wet"?"💧":e.type==="dirty"?"💩":e.type==="both"?"💧💩":"✨";
 }
-async function cloudSave(data){
-  if(!window._fbSave) return false;
-  try{return await window._fbSave(data);}catch(e){return false;}
+function entryLabel(e){
+  if(e.category==="vitamin")return e.key==="simecol"?"סימיקול":e.key==="vitD"?"ויטמין D":"ברזל";
+  if(e.category==="medicine")return e.name||"תרופה";
+  if(e.category==="feeding")return e.type==="breast"?"האכלת שד":e.type==="pump"?"שאיבה 🫙":"האכלת בקבוק";
+  return "חיתול";
+}
+function entrySub(e){
+  if(e.category==="vitamin")return e.key==="simecol"&&e.value?`${e.value} מ״ל`:"ניתן";
+  if(e.category==="medicine")return[e.medType,e.dose].filter(Boolean).join(" · ");
+  if(e.category==="feeding")return e.type==="breast"?(e.duration?`${e.duration} דקות`:""):(e.ml?`${e.ml} מ״ל`:"");
+  return e.type==="wet"?"רטוב":e.type==="dirty"?"מלוכלך":e.type==="both"?"שניהם":"יבש";
+}
+function entryColor(e){
+  if(e.category==="vitamin")return e.key==="simecol"?"#A8D8F9":e.key==="vitD"?"#FFE99A":"#FFCBA4";
+  if(e.category==="medicine")return"#D4A8F9";
+  if(e.category==="feeding")return e.type==="pump"?"#A8F0E8":"#F9A8C9";
+  return"#9EDFCC";
 }
 
-function entryInfo(entry){
-  if(entry.category==="vitamin"){
-    const s=entry.key==="simecol";
-    return{isF:false,isVit:true,isDrug:false,color:s?C.blue:entry.key==="vitD"?C.yellow:C.peach,emoji:s?"🔵":entry.key==="vitD"?"☀️":"🩸",label:s?"סימיקול":entry.key==="vitD"?"ויטמין D":"ברזל",sub:s&&entry.value?`${entry.value} מ״ל`:"ניתן"};
-  }
-  if(entry.category==="medicine"){
-    const e=entry.medType==="משחה"?"🧴":entry.medType==="טיפות"?"💧":"💊";
-    return{isF:false,isVit:false,isDrug:true,color:C.purple,emoji:e,label:entry.name||"תרופה",sub:[entry.medType,entry.dose,entry.note].filter(Boolean).join(" · ")};
-  }
-  const isF=entry.category==="feeding";
-  return{isF,isVit:false,isDrug:false,color:isF?C.pink:entry.type==="pump"?C.teal:C.mint,
-    emoji:isF?(entry.type==="breast"?"🤱":entry.type==="pump"?"🫙":"🍼"):(entry.type==="wet"?"💧":entry.type==="dirty"?"💩":entry.type==="both"?"💧💩":"✨"),
-    label:isF?(entry.type==="breast"?"האכלת שד":entry.type==="pump"?"שאיבה 🫙":"האכלת בקבוק"):"חיתול",
-    sub:isF?(entry.type==="breast"?(entry.duration?`${entry.duration} דקות`:""):(entry.ml?`${entry.ml} מ״ל`:"")):(entry.type==="wet"?"רטוב":entry.type==="dirty"?"מלוכלך":entry.type==="both"?"שניהם":"יבש")};
+// ── CLOUD ─────────────────────────────────────────────────────────────────────
+async function loadData(){
+  if(!window._load)return;
+  const d=await window._load();
+  DATA={entries:[],vitamins:{},medicalRecords:[],medicines:[],...d};
+  renderAll();
+  document.getElementById("loader").style.display="none";
+}
+async function saveData(){
+  setSaveStatus("saving");
+  const ok=await window._save(DATA);
+  setSaveStatus(ok?"saved":"error");
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(()=>setSaveStatus("idle"),ok?2000:5000);
+}
+function setSaveStatus(s){
+  const el=document.getElementById("save-status");
+  if(s==="saving")el.textContent="💾 שומר...";
+  else if(s==="saved")el.textContent="✅ נשמר";
+  else if(s==="error")el.textContent="⚠️ שגיאת שמירה";
+  else el.textContent="👨‍👩‍👧 יומן משפחתי";
+}
+async function syncNow(){
+  document.getElementById("sync-btn").textContent="⏳";
+  await loadData();
+  document.getElementById("sync-btn").textContent="🔄";
+  showToast("🔄 עודכן!");
 }
 
-function App(){
-  const [data,setData]=useState(null);
-  const [tab,setTab]=useState("home");
-  const [modal,setModal]=useState(null);
-  const [editEntry,setEditEntry]=useState(null);
-  const [toast,setToast]=useState(null);
-  const [syncing,setSyncing]=useState(false);
-  const [saveStatus,setSaveStatus]=useState(null);
-  const [pendingEntry,setPendingEntry]=useState(null);
-  const [photoLoaded,setPhotoLoaded]=useState(false);
-  const saveTimer=useRef(null);
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function renderAll(){
+  renderHome();
+  renderHistory();
+  renderVitamins();
+  renderMedical();
+  updateAlert();
+}
 
-  useEffect(()=>{
-    cloudLoad().then(d=>setData({medicalRecords:[],medicines:[],...d}));
-    const iv=setInterval(()=>cloudLoad().then(d=>setData({medicalRecords:[],medicines:[],...d})),30000);
-    return ()=>clearInterval(iv);
-  },[]);
-
-  function persist(nd){
-    setSaveStatus("saving");
-    cloudSave(nd).then(ok=>{setSaveStatus(ok?"saved":"error");clearTimeout(saveTimer.current);saveTimer.current=setTimeout(()=>setSaveStatus(null),ok?2000:5000);});
-  }
-  function updateData(fn){setData(prev=>{const u=fn(prev);persist(u);return u;});}
-  function submitWithPerformer(p){
-    if(!pendingEntry)return;
-    updateData(prev=>({...prev,entries:[{...pendingEntry,id:Date.now(),time:nowIso(),by:p},...prev.entries]}));
-    setPendingEntry(null);setModal(null);showToast(`✅ נרשם על ידי ${p}!`);
-  }
-  function requestPerformer(entry){setPendingEntry(entry);setModal("who");}
-  function giveVitamin(key,value,performer){
-    updateData(prev=>{
-      const today=todayStr(),dv=prev.vitamins[today]||{};
-      return{...prev,vitamins:{...prev.vitamins,[today]:{...dv,[key]:value}},
-        entries:value?[{id:Date.now(),time:nowIso(),category:"vitamin",key,value,by:performer||""},...prev.entries]:prev.entries};
-    });showToast("✅ עודכן!");
-  }
-  function toggleVitamin(key,value){const t=todayStr();updateData(prev=>({...prev,vitamins:{...prev.vitamins,[t]:{...(prev.vitamins[t]||{}),[key]:value}}}));showToast("✅ עודכן!");}
-  function deleteEntry(id){updateData(prev=>({...prev,entries:prev.entries.filter(e=>e.id!==id)}));setEditEntry(null);showToast("🗑 נמחק");}
-  function saveEdit(u){updateData(prev=>({...prev,entries:prev.entries.map(e=>e.id===u.id?u:e)}));setEditEntry(null);showToast("✅ עודכן!");}
-  function saveMedicalRecord(rec){
-    updateData(prev=>{const rs=prev.medicalRecords||[];return rec.id?{...prev,medicalRecords:rs.map(r=>r.id===rec.id?rec:r)}:{...prev,medicalRecords:[{...rec,id:Date.now()},...rs]};});showToast("✅ נשמר!");
-  }
-  function deleteMedicalRecord(id){updateData(prev=>({...prev,medicalRecords:(prev.medicalRecords||[]).filter(r=>r.id!==id)}));showToast("🗑 נמחק");}
-  function saveMedicine(med){
-    updateData(prev=>{const ms=prev.medicines||[];return med.id?{...prev,medicines:ms.map(m=>m.id===med.id?med:m)}:{...prev,medicines:[{...med,id:Date.now()},...ms]};});showToast("✅ נשמר!");
-  }
-  function deleteMedicine(id){updateData(prev=>({...prev,medicines:(prev.medicines||[]).filter(m=>m.id!==id)}));showToast("🗑 נמחק");}
-  function giveMedicine(med,performer){
-    updateData(prev=>({...prev,entries:[{id:Date.now(),time:nowIso(),category:"medicine",name:med.name,medType:med.medType,dose:med.dose,note:med.note,by:performer},...prev.entries]}));
-    showToast(`✅ ${med.name} נרשם!`);
-  }
-  function showToast(msg){setToast(msg);setTimeout(()=>setToast(null),2200);}
-
-  // מסך טעינה
-  if(!data) return(
-    <div dir="rtl" style={{minHeight:"100vh",position:"relative",overflow:"hidden",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:"'Segoe UI','Arial Hebrew',sans-serif"}}>
-      <div style={{position:"absolute",inset:0,background:`linear-gradient(135deg, ${C.pink}, ${C.lavender}, ${C.mint})`,zIndex:0}}/>
-      {photoLoaded&&<div style={{position:"absolute",inset:0,backgroundImage:`url(${MILA_PHOTO_URL})`,backgroundSize:"cover",backgroundPosition:"center top",filter:"blur(3px) brightness(0.5)",zIndex:1}}/>}
-      <img src={MILA_PHOTO_URL} onLoad={()=>setPhotoLoaded(true)} alt="" style={{display:"none"}}/>
-      <div style={{position:"relative",zIndex:2,display:"flex",flexDirection:"column",alignItems:"center",padding:24}}>
-        <div style={{width:170,height:170,borderRadius:"50%",border:"5px solid white",boxShadow:"0 8px 32px rgba(0,0,0,0.4)",marginBottom:20,overflow:"hidden",background:`linear-gradient(135deg,${C.pink},${C.lavender})`}}>
-          <img src={MILA_PHOTO_URL} alt="מילה רחל" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top"}}/>
-        </div>
-        <div style={{fontSize:32,fontWeight:900,color:"white",textShadow:"0 2px 12px rgba(0,0,0,0.6)"}}>🌸 מילה רחל</div>
-        <div style={{fontSize:15,color:"rgba(255,255,255,0.9)",marginTop:8,fontWeight:600}}>יומן תינוקת משפחתי</div>
-        <div style={{fontSize:13,color:"rgba(255,255,255,0.7)",marginTop:4}}>טוען נתונים...</div>
-        <div style={{marginTop:20,width:32,height:32,border:"4px solid rgba(255,255,255,0.3)",borderTop:"4px solid white",borderRadius:"50%",animation:"spin 0.9s linear infinite"}}/>
-      </div>
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-    </div>
-  );
-
+function renderHome(){
   const today=todayStr();
-  const todayEntries=data.entries.filter(e=>e.time.slice(0,10)===today);
-  const todayVits=data.vitamins[today]||{};
-  const lastFeeding=data.entries.find(e=>e.category==="feeding")||null;
-  const lastDiaper=data.entries.find(e=>e.category==="diaper")||null;
-
-  return(
-    <div dir="rtl" style={{minHeight:"100vh",background:C.bg,fontFamily:"'Segoe UI','Arial Hebrew',sans-serif",maxWidth:480,margin:"0 auto",paddingBottom:85}}>
-      {/* כותרת עם תמונה */}
-      <div style={{background:`linear-gradient(135deg,${C.pink},${C.lavender})`,borderRadius:"0 0 32px 32px",boxShadow:`0 4px 20px ${C.shadow}`,position:"relative",overflow:"hidden"}}>
-        <div style={{width:"100%",height:130,position:"relative",overflow:"hidden"}}>
-          <div style={{position:"absolute",inset:0,background:`linear-gradient(135deg,${C.pink},${C.lavender})`}}/>
-          <img src={MILA_PHOTO_URL} alt="" onError={e=>e.target.style.display="none"} style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 20%",display:"block",filter:"brightness(0.65)"}}/>
-        </div>
-        <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
-          <div style={{fontSize:26,fontWeight:900,color:"white",textShadow:"0 2px 8px rgba(0,0,0,0.6)"}}>🌸 מילה רחל</div>
-          <div style={{fontSize:11,color:"rgba(255,255,255,0.9)",marginTop:3}}>{saveStatus==="saving"?"💾 שומר...":saveStatus==="saved"?"✅ נשמר":saveStatus==="error"?"⚠️ שגיאת שמירה":"👨‍👩‍👧 יומן משפחתי"}</div>
-        </div>
-        <button onClick={()=>{setSyncing(true);cloudLoad().then(d=>{setData(d);setSyncing(false);showToast("🔄 עודכן!");});}} style={{position:"absolute",left:14,top:12,background:"rgba(255,255,255,0.25)",border:"none",borderRadius:10,padding:"6px 10px",cursor:"pointer",fontSize:16}}>{syncing?"⏳":"🔄"}</button>
-      </div>
-
-      {tab==="home"&&<HomeTab todayEntries={todayEntries} todayVits={todayVits} lastFeeding={lastFeeding} lastDiaper={lastDiaper} onModal={setModal} onGiveVit={giveVitamin} onEdit={setEditEntry} medicines={data.medicines||[]} onRequestPerformer={requestPerformer}/>}
-      {tab==="history"&&<HistoryTab entries={data.entries} onEdit={setEditEntry}/>}
-      {tab==="vitamins"&&<VitaminsTab vitamins={data.vitamins} todayVits={todayVits} onGive={giveVitamin} onToggle={toggleVitamin}/>}
-      {tab==="medical"&&<MedicalTab records={data.medicalRecords||[]} medicines={data.medicines||[]} onSaveRecord={saveMedicalRecord} onDeleteRecord={deleteMedicalRecord} onSaveMed={saveMedicine} onDeleteMed={deleteMedicine}/>}
-
-      <nav style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:480,background:C.white,borderTop:`2px solid ${C.pink}`,display:"flex",justifyContent:"space-around",padding:"8px 0 14px",zIndex:100,boxShadow:"0 -4px 20px rgba(0,0,0,0.07)"}}>
-        {[{k:"home",e:"🏠",l:"בית"},{k:"history",e:"📋",l:"היסטוריה"},{k:"vitamins",e:"💊",l:"ויטמינים"},{k:"medical",e:"🏥",l:"רפואי"}].map(t=>(
-          <button key={t.k} onClick={()=>setTab(t.k)} style={{background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:1,opacity:tab===t.k?1:0.4,transform:tab===t.k?"scale(1.1)":"scale(1)",transition:"all 0.2s"}}>
-            <span style={{fontSize:22}}>{t.e}</span>
-            <span style={{fontSize:10,fontWeight:700,color:C.text}}>{t.l}</span>
-          </button>
-        ))}
-      </nav>
-
-      {modal==="feeding_type"&&<Sheet title="איך האכלה? 🍼" onClose={()=>setModal(null)}><div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12,marginTop:8}}><BigBtn emoji="🤱" label="שד" color={C.pink} onClick={()=>setModal("feeding_breast")}/><BigBtn emoji="🍼" label="בקבוק" color={C.peach} onClick={()=>setModal("feeding_bottle")}/><BigBtn emoji="🫙" label="שאיבה" color={C.teal} onClick={()=>setModal("feeding_pump")}/></div></Sheet>}
-      {modal==="feeding_breast"&&<Sheet title="האכלת שד 🤱" onClose={()=>setModal(null)}><Lbl>כמה דקות ינקה?</Lbl><QuickPicker options={[5,10,15,20,25,30]} color={C.pink} unit="דק'" placeholder="הכנס דקות..." onSelect={v=>requestPerformer({category:"feeding",type:"breast",duration:v})}/></Sheet>}
-      {modal==="feeding_bottle"&&<Sheet title="האכלת בקבוק 🍼" onClose={()=>setModal(null)}><Lbl>כמה מ״ל שתתה?</Lbl><QuickPicker options={[60,70,80,90,100,120]} color={C.peach} unit='מ"ל' placeholder='כמות אחרת...' onSelect={v=>requestPerformer({category:"feeding",type:"bottle",ml:v})}/></Sheet>}
-      {modal==="feeding_pump"&&<Sheet title="שאיבה 🫙" onClose={()=>setModal(null)}><Lbl>כמה מ״ל נשאב?</Lbl><QuickPicker options={[30,40,50,60,70,80,90]} color={C.teal} unit='מ"ל' placeholder='כמות אחרת...' onSelect={v=>requestPerformer({category:"feeding",type:"pump",ml:v})}/></Sheet>}
-      {modal==="diaper"&&<Sheet title="חיתול 👶" onClose={()=>setModal(null)}><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:8}}>{[{v:"wet",e:"💧",l:"רטוב"},{v:"dirty",e:"💩",l:"מלוכלך"},{v:"both",e:"💧💩",l:"שניהם"},{v:"dry",e:"✨",l:"יבש"}].map(o=><BigBtn key={o.v} emoji={o.e} label={o.l} color={C.mint} onClick={()=>requestPerformer({category:"diaper",type:o.v})}/>)}</div></Sheet>}
-      {modal==="simecol"&&<Sheet title="סימיקול 🔵" onClose={()=>setModal(null)}><Lbl>כמה מ״ל?</Lbl><div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:16}}>{[0.2,0.3,0.4].map(v=><button key={v} onClick={()=>requestPerformer({category:"vitamin",key:"simecol",value:v,_isVit:true})} style={{background:C.blue+"44",border:`2.5px solid ${C.blue}`,borderRadius:16,padding:"18px 6px",cursor:"pointer",fontFamily:"inherit"}}><div style={{fontSize:24,fontWeight:900,color:C.text}}>{v}</div><div style={{fontSize:12,color:C.soft,marginTop:3}}>מ״ל</div></button>)}</div><CustomInput color={C.blue} placeholder="כמות אחרת..." step="0.1" onSelect={v=>requestPerformer({category:"vitamin",key:"simecol",value:v,_isVit:true})}/></Sheet>}
-
-      {modal==="who"&&pendingEntry&&(
-        <WhoModal
-          pendingEntry={pendingEntry}
-          onDone={(name)=>{
-            if(pendingEntry._isVit){giveVitamin(pendingEntry.key,pendingEntry.value,name);setPendingEntry(null);setModal(null);}
-            else if(pendingEntry._isMed){giveMedicine(pendingEntry._med,name);setPendingEntry(null);setModal(null);}
-            else submitWithPerformer(name);
-          }}
-          onClose={()=>{setModal(null);setPendingEntry(null);}}
-        />
-      )}
-      {editEntry&&<EditModal entry={editEntry} onSave={saveEdit} onDelete={deleteEntry} onClose={()=>setEditEntry(null)}/>}
-      {toast&&<div style={{position:"fixed",bottom:95,left:"50%",transform:"translateX(-50%)",background:C.text,color:C.white,borderRadius:20,padding:"10px 26px",fontSize:15,fontWeight:700,zIndex:999,whiteSpace:"nowrap",boxShadow:"0 4px 20px rgba(0,0,0,0.2)"}}>{toast}</div>}
-    </div>
-  );
-}
-
-function HomeTab({todayEntries,todayVits,lastFeeding,lastDiaper,onModal,onGiveVit,onEdit,medicines,onRequestPerformer}){
+  const todayEntries=DATA.entries.filter(e=>e.time.slice(0,10)===today);
   const feedings=todayEntries.filter(e=>e.category==="feeding");
   const diapers=todayEntries.filter(e=>e.category==="diaper");
+  const todayVits=DATA.vitamins[today]||{};
   const vitCount=[todayVits.vitD,todayVits.iron,todayVits.simecol].filter(Boolean).length;
-  return(
-    <div style={{padding:"20px 16px"}}>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8,marginBottom:22}}>
-        <StatCard emoji="🍼" val={feedings.length} label="האכלות" color={C.pink}/>
-        <StatCard emoji="👶" val={diapers.length} label="חיתולים" color={C.mint}/>
-        <StatCard emoji="💊" val={`${vitCount}/3`} label="ויטמינים" color={C.lavender}/>
-        <StatCard emoji="🔵" val={todayVits.simecol||"—"} label="סימיקול" color={C.blue}/>
-      </div>
-      <Section title="אחרון שנרשם 🕐">
-        <EntryRow entry={lastFeeding} fallback="עוד לא נרשמה האכלה" onEdit={onEdit} showAgo/>
-        <EntryRow entry={lastDiaper} fallback="עוד לא נרשם חיתול" onEdit={onEdit} showAgo/>
-      </Section>
-      <Section title="הוספה מהירה ✏️">
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-          <ActionBtn emoji="🍼" label="האכלה" color={C.pink} onClick={()=>onModal("feeding_type")}/>
-          <ActionBtn emoji="👶" label="חיתול" color={C.mint} onClick={()=>onModal("diaper")}/>
-        </div>
-      </Section>
-      <Section title="ויטמינים היום 💊">
-        <div style={{display:"flex",gap:10}}>
-          <VitBtn emoji="☀️" label="ויטמין D" done={!!todayVits.vitD} color={C.yellow} onClick={()=>onGiveVit("vitD",true)}/>
-          <VitBtn emoji="🩸" label="ברזל" done={!!todayVits.iron} color={C.peach} onClick={()=>onGiveVit("iron",true)}/>
-          <VitBtn emoji="🔵" label="סימיקול" done={!!todayVits.simecol} sub={todayVits.simecol?`${todayVits.simecol} מ״ל`:null} color={C.blue} onClick={()=>onModal("simecol")}/>
-        </div>
-      </Section>
-      {medicines.length>0&&(
-        <Section title="תרופות קבועות 🧴">
-          {medicines.map(med=>(
-            <div key={med.id} style={{display:"flex",alignItems:"center",background:C.purple+"22",border:`1.5px solid ${C.purple}`,borderRadius:14,padding:"10px 14px",gap:10,marginBottom:8}}>
-              <span style={{fontSize:22}}>{med.medType==="משחה"?"🧴":med.medType==="טיפות"?"💧":"💊"}</span>
-              <div style={{flex:1}}><div style={{fontWeight:800,color:C.text,fontSize:14}}>{med.name}</div>{med.dose&&<div style={{fontSize:12,color:C.soft}}>{med.dose}</div>}</div>
-              <button onClick={()=>onRequestPerformer({_isMed:true,_med:med})} style={{background:C.purple,border:"none",borderRadius:10,padding:"8px 14px",cursor:"pointer",fontWeight:800,fontSize:13,color:C.white,fontFamily:"inherit"}}>ניתן ✅</button>
-            </div>
-          ))}
-        </Section>
-      )}
-    </div>
-  );
-}
 
-function HistoryTab({entries,onEdit}){
-  const [filter,setFilter]=useState("all");
-  const filtered=filter==="all"?entries:filter==="vitamin"?entries.filter(e=>e.category==="vitamin"):filter==="medicine"?entries.filter(e=>e.category==="medicine"):entries.filter(e=>e.category===filter);
-  const grouped={};
-  filtered.forEach(e=>{const d=e.time.slice(0,10);if(!grouped[d])grouped[d]=[];grouped[d].push(e);});
-  const dates=Object.keys(grouped).sort((a,b)=>b.localeCompare(a));
-  return(
-    <div style={{padding:"20px 16px"}}>
-      <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap"}}>
-        {[{v:"all",l:"הכל"},{v:"feeding",l:"🍼 האכלות"},{v:"diaper",l:"👶 חיתולים"},{v:"vitamin",l:"💊 ויטמינים"},{v:"medicine",l:"🧴 תרופות"}].map(f=>(
-          <button key={f.v} onClick={()=>setFilter(f.v)} style={chip(filter===f.v,C.lavender)}>{f.l}</button>
-        ))}
-      </div>
-      {dates.length===0&&<Empty text="אין רשומות עדיין 🌱"/>}
-      {dates.map(d=>(
-        <div key={d} style={{marginBottom:18}}>
-          <div style={{fontSize:13,fontWeight:700,color:C.soft,marginBottom:8}}>{formatDateLabel(d)}</div>
-          {grouped[d].sort((a,b)=>b.time.localeCompare(a.time)).map(e=><EntryRow key={e.id} entry={e} onEdit={onEdit}/>)}
-        </div>
-      ))}
-    </div>
-  );
-}
+  document.getElementById("stats-row").innerHTML=`
+    <div class="stat-card" style="background:rgba(249,168,201,.2);border:2px solid #F9A8C9"><div class="emoji">🍼</div><div class="val">${feedings.length}</div><div class="lbl">האכלות</div></div>
+    <div class="stat-card" style="background:rgba(158,223,204,.2);border:2px solid #9EDFCC"><div class="emoji">👶</div><div class="val">${diapers.length}</div><div class="lbl">חיתולים</div></div>
+    <div class="stat-card" style="background:rgba(197,180,232,.2);border:2px solid #C5B4E8"><div class="emoji">💊</div><div class="val">${vitCount}/3</div><div class="lbl">ויטמינים</div></div>
+    <div class="stat-card" style="background:rgba(168,216,249,.2);border:2px solid #A8D8F9"><div class="emoji">🔵</div><div class="val">${todayVits.simecol||"—"}</div><div class="lbl">סימיקול</div></div>
+  `;
 
-function VitaminsTab({vitamins,todayVits,onGive,onToggle}){
-  const [showSim,setShowSim]=useState(false);
-  const dates=Object.keys(vitamins).sort((a,b)=>b.localeCompare(a)).slice(0,14);
-  return(
-    <div style={{padding:"20px 16px"}}>
-      <Section title="היום — ניתן לתת מספר פעמים">
-        <div style={{display:"flex",gap:10,marginBottom:12}}>
-          <VitBtn emoji="☀️" label="ויטמין D" done={!!todayVits.vitD} color={C.yellow} onClick={()=>onGive("vitD",true)}/>
-          <VitBtn emoji="🩸" label="ברזל" done={!!todayVits.iron} color={C.peach} onClick={()=>onGive("iron",true)}/>
-          <VitBtn emoji="🔵" label="סימיקול" done={!!todayVits.simecol} sub={todayVits.simecol?`${todayVits.simecol} מ״ל`:null} color={C.blue} onClick={()=>setShowSim(s=>!s)}/>
-        </div>
-        {showSim&&(
-          <div style={{background:C.blue+"22",border:`2px solid ${C.blue}`,borderRadius:18,padding:"16px 14px"}}>
-            <Lbl>בחרו כמות סימיקול:</Lbl>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:12}}>
-              {[0.2,0.3,0.4].map(v=><button key={v} onClick={()=>{onGive("simecol",v);setShowSim(false);}} style={{background:todayVits.simecol===v?C.blue:C.blue+"44",border:`2.5px solid ${C.blue}`,borderRadius:14,padding:"14px 6px",cursor:"pointer",fontFamily:"inherit"}}><div style={{fontSize:22,fontWeight:900,color:C.text}}>{v}</div><div style={{fontSize:11,color:C.soft,marginTop:2}}>מ״ל</div></button>)}
-            </div>
-            <CustomInput color={C.blue} placeholder="כמות אחרת..." step="0.1" onSelect={v=>{onGive("simecol",v);setShowSim(false);}}/>
-            {todayVits.simecol&&<button onClick={()=>{onToggle("simecol",false);setShowSim(false);}} style={{width:"100%",marginTop:10,padding:"10px",borderRadius:12,background:"#fee",border:`1.5px solid ${C.red}`,cursor:"pointer",fontSize:13,fontWeight:700,color:C.red,fontFamily:"inherit"}}>🗑 בטל סימיקול היום</button>}
-          </div>
-        )}
-      </Section>
-      <Section title="14 ימים אחרונים">
-        {dates.length===0&&<Empty text="אין נתונים עדיין"/>}
-        {dates.map(d=>{const v=vitamins[d]||{};return(
-          <div key={d} style={{display:"flex",alignItems:"center",justifyContent:"space-between",background:C.white,borderRadius:14,padding:"12px 16px",marginBottom:8,boxShadow:`0 2px 10px ${C.shadow}`}}>
-            <span style={{fontSize:13,fontWeight:700,color:C.soft}}>{formatDateLabel(d)}</span>
-            <div style={{display:"flex",gap:12,alignItems:"center"}}>
-              <span style={{fontSize:20,opacity:v.vitD?1:0.18}}>☀️</span>
-              <span style={{fontSize:20,opacity:v.iron?1:0.18}}>🩸</span>
-              <div style={{display:"flex",flexDirection:"column",alignItems:"center",opacity:v.simecol?1:0.18}}>
-                <span style={{fontSize:18}}>🔵</span>
-                {v.simecol&&<span style={{fontSize:10,fontWeight:700,color:C.soft}}>{v.simecol} מ״ל</span>}
-              </div>
-            </div>
-          </div>
-        );})}
-      </Section>
-    </div>
-  );
-}
+  const lastF=DATA.entries.find(e=>e.category==="feeding");
+  const lastD=DATA.entries.find(e=>e.category==="diaper");
+  document.getElementById("last-feeding-row").innerHTML=lastF?renderEntryRow(lastF,true,true):`<div class="entry-row" style="background:#f5f0ff;border-color:#f5f0ff;justify-content:center"><span style="color:#9B8AAD;font-size:13px">עוד לא נרשמה האכלה</span></div>`;
+  document.getElementById("last-diaper-row").innerHTML=lastD?renderEntryRow(lastD,true,true):`<div class="entry-row" style="background:#f5f0ff;border-color:#f5f0ff;justify-content:center"><span style="color:#9B8AAD;font-size:13px">עוד לא נרשם חיתול</span></div>`;
 
-function MedicalTab({records,medicines,onSaveRecord,onDeleteRecord,onSaveMed,onDeleteMed}){
-  const [subTab,setSubTab]=useState("records");
-  const [showRecordForm,setShowRecordForm]=useState(false);
-  const [editRecord,setEditRecord]=useState(null);
-  const [showMedForm,setShowMedForm]=useState(false);
-  const [editMed,setEditMed]=useState(null);
-  const sorted=[...records].sort((a,b)=>(b.date||"").localeCompare(a.date||""));
-  const past=sorted.filter(r=>!r.future&&(r.date||"")<=todayStr());
-  const future=sorted.filter(r=>r.future||(r.date||"")>todayStr()).sort((a,b)=>(a.date||"").localeCompare(b.date||""));
-  return(
-    <div style={{padding:"20px 16px"}}>
-      <div style={{display:"flex",gap:10,marginBottom:20}}>
-        <button onClick={()=>setSubTab("records")} style={{flex:1,padding:"12px",borderRadius:14,border:`2px solid ${C.teal}`,background:subTab==="records"?C.teal:C.teal+"33",cursor:"pointer",fontWeight:800,fontSize:14,color:C.text,fontFamily:"inherit"}}>🩺 בדיקות</button>
-        <button onClick={()=>setSubTab("medicines")} style={{flex:1,padding:"12px",borderRadius:14,border:`2px solid ${C.purple}`,background:subTab==="medicines"?C.purple:C.purple+"33",cursor:"pointer",fontWeight:800,fontSize:14,color:C.text,fontFamily:"inherit"}}>💊 תרופות / משחות</button>
-      </div>
-      {subTab==="records"&&(<>
-        <button onClick={()=>{setEditRecord(null);setShowRecordForm(true);}} style={{width:"100%",padding:"14px",borderRadius:16,background:`linear-gradient(135deg,${C.teal},${C.mint})`,border:"none",cursor:"pointer",fontSize:16,fontWeight:900,color:C.text,fontFamily:"inherit",marginBottom:18}}>+ הוספת בדיקה / תור</button>
-        {future.length>0&&<Section title="📅 בדיקות עתידיות / תורים">{future.map(r=><RecordCard key={r.id} rec={r} onEdit={()=>{setEditRecord(r);setShowRecordForm(true);}} onDelete={()=>onDeleteRecord(r.id)} future/>)}</Section>}
-        <Section title="📋 היסטוריית בדיקות">{past.length===0&&<Empty text="אין בדיקות עדיין"/>}{past.map(r=><RecordCard key={r.id} rec={r} onEdit={()=>{setEditRecord(r);setShowRecordForm(true);}} onDelete={()=>onDeleteRecord(r.id)}/>)}</Section>
-      </>)}
-      {subTab==="medicines"&&(<>
-        <button onClick={()=>{setEditMed(null);setShowMedForm(true);}} style={{width:"100%",padding:"14px",borderRadius:16,background:`linear-gradient(135deg,${C.purple},${C.lavender})`,border:"none",cursor:"pointer",fontSize:16,fontWeight:900,color:C.white,fontFamily:"inherit",marginBottom:18}}>+ הוספת תרופה / משחה</button>
-        {medicines.length===0&&<Empty text="אין תרופות עדיין"/>}
-        {medicines.map(m=><MedCard key={m.id} med={m} onEdit={()=>{setEditMed(m);setShowMedForm(true);}} onDelete={()=>onDeleteMed(m.id)}/>)}
-      </>)}
-      {showRecordForm&&<RecordForm rec={editRecord} onSave={r=>{onSaveRecord(r);setShowRecordForm(false);}} onClose={()=>setShowRecordForm(false)}/>}
-      {showMedForm&&<MedForm med={editMed} onSave={m=>{onSaveMed(m);setShowMedForm(false);}} onClose={()=>setShowMedForm(false)}/>}
-    </div>
-  );
-}
+  // Vit buttons
+  document.getElementById("home-vit-row").innerHTML=`
+    ${vitBtn("☀️","ויטמין D",todayVits.vitD,"#FFE99A","giveVit('vitD')")}
+    ${vitBtn("🩸","ברזל",todayVits.iron,"#FFCBA4","giveVit('iron')")}
+    ${vitBtnSim(todayVits.simecol)}
+  `;
 
-function RecordCard({rec,onEdit,onDelete,future}){
-  const [confirm,setConfirm]=useState(false);
-  return(
-    <div style={{background:C.white,border:`2px solid ${future?C.orange:C.teal}`,borderRadius:16,padding:"14px 16px",marginBottom:10,boxShadow:`0 2px 10px ${C.shadow}`}}>
-      <div style={{display:"flex",alignItems:"flex-start",gap:10}}>
-        <span style={{fontSize:26}}>{future?"📅":"🩺"}</span>
-        <div style={{flex:1}}>
-          <div style={{fontWeight:900,color:C.text,fontSize:15}}>{rec.title}</div>
-          {rec.date&&<div style={{fontSize:12,color:C.soft,marginTop:2}}>{formatFullDate(rec.date+"T12:00:00")}</div>}
-          {rec.doctor&&<div style={{fontSize:12,color:C.soft}}>👨‍⚕️ {rec.doctor}</div>}
-          {rec.location&&<div style={{fontSize:12,color:C.soft}}>📍 {rec.location}</div>}
-          {rec.notes&&<div style={{fontSize:13,color:C.text,marginTop:6,padding:"8px 10px",background:C.bg,borderRadius:8}}>{rec.notes}</div>}
-        </div>
-        <div style={{display:"flex",flexDirection:"column",gap:6}}>
-          <button onClick={onEdit} style={{background:C.lavender+"44",border:`1.5px solid ${C.lavender}`,borderRadius:8,padding:"6px 10px",cursor:"pointer",fontSize:13}}>✏️</button>
-          {!confirm?<button onClick={()=>setConfirm(true)} style={{background:"#fff0f0",border:`1.5px solid ${C.red}`,borderRadius:8,padding:"6px 10px",cursor:"pointer",fontSize:13,color:C.red}}>🗑</button>
-            :<button onClick={onDelete} style={{background:C.red,border:"none",borderRadius:8,padding:"6px 10px",cursor:"pointer",fontSize:11,color:C.white,fontWeight:700}}>בטוח?</button>}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function MedCard({med,onEdit,onDelete}){
-  const [confirm,setConfirm]=useState(false);
-  const emoji=med.medType==="משחה"?"🧴":med.medType==="טיפות"?"💧":"💊";
-  return(
-    <div style={{background:C.white,border:`2px solid ${C.purple}`,borderRadius:16,padding:"14px 16px",marginBottom:10,boxShadow:`0 2px 10px ${C.shadow}`}}>
-      <div style={{display:"flex",alignItems:"flex-start",gap:10}}>
-        <span style={{fontSize:26}}>{emoji}</span>
-        <div style={{flex:1}}>
-          <div style={{fontWeight:900,color:C.text,fontSize:15}}>{med.name}</div>
-          <div style={{fontSize:12,color:C.lavender,fontWeight:700,marginTop:1}}>{med.medType}</div>
-          {med.dose&&<div style={{fontSize:12,color:C.soft}}>💉 {med.dose}</div>}
-          {med.frequency&&<div style={{fontSize:12,color:C.soft}}>🕐 {med.frequency}</div>}
-          {med.note&&<div style={{fontSize:13,color:C.text,marginTop:6,padding:"8px 10px",background:C.bg,borderRadius:8}}>{med.note}</div>}
-        </div>
-        <div style={{display:"flex",flexDirection:"column",gap:6}}>
-          <button onClick={onEdit} style={{background:C.lavender+"44",border:`1.5px solid ${C.lavender}`,borderRadius:8,padding:"6px 10px",cursor:"pointer",fontSize:13}}>✏️</button>
-          {!confirm?<button onClick={()=>setConfirm(true)} style={{background:"#fff0f0",border:`1.5px solid ${C.red}`,borderRadius:8,padding:"6px 10px",cursor:"pointer",fontSize:13,color:C.red}}>🗑</button>
-            :<button onClick={onDelete} style={{background:C.red,border:"none",borderRadius:8,padding:"6px 10px",cursor:"pointer",fontSize:11,color:C.white,fontWeight:700}}>בטוח?</button>}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function RecordForm({rec,onSave,onClose}){
-  const [title,setTitle]=useState(rec?.title||"");
-  const [date,setDate]=useState(rec?.date||todayStr());
-  const [future,setFuture]=useState(rec?.future||false);
-  const [doctor,setDoctor]=useState(rec?.doctor||"");
-  const [location,setLocation]=useState(rec?.location||"");
-  const [notes,setNotes]=useState(rec?.notes||"");
-  return(
-    <Sheet title={rec?"עריכת בדיקה ✏️":"הוספת בדיקה 🩺"} onClose={onClose}>
-      <Lbl>שם הבדיקה / ביקור:</Lbl>
-      <input value={title} onChange={e=>setTitle(e.target.value)} placeholder="למשל: בדיקת דם, ביקור רופא..." style={{...inputSt(),marginBottom:14}}/>
-      <Lbl>תאריך:</Lbl>
-      <input type="date" value={date} onChange={e=>setDate(e.target.value)} style={{...inputSt(),marginBottom:10,direction:"ltr"}}/>
-      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14,padding:"10px 14px",background:C.orange+"22",borderRadius:12,border:`1.5px solid ${C.orange}`}}>
-        <input type="checkbox" checked={future} onChange={e=>setFuture(e.target.checked)} style={{width:18,height:18,cursor:"pointer"}}/>
-        <span style={{fontSize:14,fontWeight:700,color:C.text}}>📅 בדיקה עתידית / תור</span>
-      </div>
-      <Lbl>רופא / מומחה:</Lbl>
-      <input value={doctor} onChange={e=>setDoctor(e.target.value)} placeholder="ד״ר שם..." style={{...inputSt(),marginBottom:14}}/>
-      <Lbl>מיקום:</Lbl>
-      <input value={location} onChange={e=>setLocation(e.target.value)} placeholder="בית חולים, קופת חולים..." style={{...inputSt(),marginBottom:14}}/>
-      <Lbl>הערות / ממצאים / מרשם:</Lbl>
-      <textarea value={notes} onChange={e=>setNotes(e.target.value)} placeholder="פרטים, תוצאות, מרשמים שהתקבלו..." rows={4} style={{...inputSt(),resize:"vertical",marginBottom:16}}/>
-      <button onClick={()=>{if(!title.trim())return;onSave({...(rec||{}),title,date,future,doctor,location,notes});}} style={{width:"100%",padding:"14px",borderRadius:16,background:`linear-gradient(135deg,${C.teal},${C.mint})`,border:"none",cursor:"pointer",fontSize:16,fontWeight:900,color:C.text,fontFamily:"inherit"}}>שמור בדיקה ✅</button>
-    </Sheet>
-  );
-}
-
-function MedForm({med,onSave,onClose}){
-  const [name,setName]=useState(med?.name||"");
-  const [medType,setMedType]=useState(med?.medType||"תרופה");
-  const [dose,setDose]=useState(med?.dose||"");
-  const [frequency,setFrequency]=useState(med?.frequency||"");
-  const [note,setNote]=useState(med?.note||"");
-  return(
-    <Sheet title={med?"עריכת תרופה ✏️":"הוספת תרופה / משחה 💊"} onClose={onClose}>
-      <Lbl>סוג:</Lbl>
-      <div style={{display:"flex",gap:8,marginBottom:16}}>
-        {[{v:"תרופה",e:"💊"},{v:"משחה",e:"🧴"},{v:"טיפות",e:"💧"},{v:"אחר",e:"🩺"}].map(t=>(
-          <button key={t.v} onClick={()=>setMedType(t.v)} style={{flex:1,padding:"10px 4px",borderRadius:12,border:`2px solid ${C.purple}`,background:medType===t.v?C.purple:C.purple+"22",cursor:"pointer",fontWeight:800,fontSize:12,color:C.text,fontFamily:"inherit",display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
-            <span style={{fontSize:20}}>{t.e}</span>{t.v}
-          </button>
-        ))}
-      </div>
-      <Lbl>שם התרופה / משחה:</Lbl>
-      <input value={name} onChange={e=>setName(e.target.value)} placeholder="שם התרופה..." style={{...inputSt(),marginBottom:14}}/>
-      <Lbl>מינון:</Lbl>
-      <input value={dose} onChange={e=>setDose(e.target.value)} placeholder="למשל: 2.5 מ״ל, פעמיים ביום..." style={{...inputSt(),marginBottom:14}}/>
-      <Lbl>תדירות:</Lbl>
-      <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:10}}>
-        {["פעם ביום","פעמיים ביום","3 פעמים ביום","לפי הצורך"].map(f=>(
-          <button key={f} onClick={()=>setFrequency(f)} style={{padding:"7px 12px",borderRadius:10,border:`1.5px solid ${C.lavender}`,background:frequency===f?C.lavender:C.lavender+"22",cursor:"pointer",fontSize:12,fontWeight:700,color:C.text,fontFamily:"inherit"}}>{f}</button>
-        ))}
-      </div>
-      <input value={frequency} onChange={e=>setFrequency(e.target.value)} placeholder="או הכנס תדירות..." style={{...inputSt(),marginBottom:14}}/>
-      <Lbl>הערות / הוראות:</Lbl>
-      <textarea value={note} onChange={e=>setNote(e.target.value)} placeholder="הוראות שימוש, אזהרות..." rows={3} style={{...inputSt(),resize:"vertical",marginBottom:16}}/>
-      <button onClick={()=>{if(!name.trim())return;onSave({...(med||{}),name,medType,dose,frequency,note});}} style={{width:"100%",padding:"14px",borderRadius:16,background:`linear-gradient(135deg,${C.purple},${C.lavender})`,border:"none",cursor:"pointer",fontSize:16,fontWeight:900,color:C.white,fontFamily:"inherit"}}>שמור תרופה ✅</button>
-    </Sheet>
-  );
-}
-
-function EditModal({entry,onSave,onDelete,onClose}){
-  const {isF,isVit,isDrug}=entryInfo(entry);
-  const [type,setType]=useState(entry.type);
-  const [duration,setDuration]=useState(entry.duration||"");
-  const [ml,setMl]=useState(entry.ml||"");
-  const [vitValue,setVitValue]=useState(entry.value||true);
-  const [timeVal,setTimeVal]=useState(toTimeInput(entry.time));
-  const [performer,setPerformer]=useState(entry.by||"");
-  const [confirmDel,setConfirmDel]=useState(false);
-  function handleSave(){
-    const nt=applyTimeToIso(entry.time,timeVal);
-    if(isVit){onSave({...entry,time:nt,value:vitValue,by:performer});return;}
-    if(isDrug){onSave({...entry,time:nt,by:performer});return;}
-    const u={...entry,type,time:nt,by:performer};
-    if(isF&&type==="breast"){u.duration=Number(duration);delete u.ml;}
-    if(isF&&type==="bottle"){u.ml=Number(ml);delete u.duration;}
-    onSave(u);
+  // Meds quick
+  const meds=DATA.medicines||[];
+  if(meds.length>0){
+    document.getElementById("meds-quick-section").style.display="";
+    document.getElementById("meds-quick-list").innerHTML=meds.map(m=>`
+      <button onclick="openWho({...${JSON.stringify(m)},_isMed:true,_med:${JSON.stringify(m)}})" style="background:rgba(212,168,249,.13);border:1.5px solid #D4A8F9;border-radius:14px;padding:12px 16px;display:flex;align-items:center;gap:12px;width:100%;margin-bottom:8px;text-align:right">
+        <span style="font-size:24px">${m.medType==="משחה"?"🧴":m.medType==="טיפות"?"💧":"💊"}</span>
+        <div style="flex:1"><div style="font-weight:800;color:#3D2B4F;font-size:14px">${m.name}</div>${m.dose?`<div style="font-size:12px;color:#9B8AAD">${m.dose}</div>`:""}</div>
+        <span style="font-size:13px;color:#D4A8F9;font-weight:700">רשום ✓</span>
+      </button>
+    `).join("");
+  } else {
+    document.getElementById("meds-quick-section").style.display="none";
   }
-  const title=isVit?(entry.key==="simecol"?"עריכת סימיקול 🔵":entry.key==="vitD"?"עריכת ויטמין D ☀️":"עריכת ברזל 🩸"):isDrug?`עריכת ${entry.name} 💊`:isF?"עריכת האכלה ✏️":"עריכת חיתול ✏️";
-  return(
-    <Sheet title={title} onClose={onClose}>
-      <div style={{background:C.lavender+"33",border:`2px solid ${C.lavender}`,borderRadius:16,padding:"14px 16px",marginBottom:18}}>
-        <Lbl>🕐 שעה:</Lbl>
-        <input type="time" value={timeVal} onChange={e=>setTimeVal(e.target.value)} style={{width:"100%",padding:"12px",borderRadius:12,border:`2px solid ${C.lavender}`,fontSize:24,fontWeight:900,color:C.text,background:C.white,outline:"none",fontFamily:"inherit",textAlign:"center",boxSizing:"border-box",direction:"ltr"}}/>
-        <div style={{fontSize:11,color:C.soft,marginTop:6,textAlign:"center"}}>{new Date(entry.time).toLocaleDateString("he-IL",{weekday:"long",day:"numeric",month:"long"})}</div>
+}
+
+function vitBtn(emoji,label,done,color,onclick){
+  return`<button class="vit-btn${done?" done":""}" style="background:${done?color:color+"33"};border-color:${color};box-shadow:${done?`0 4px 14px ${color}88`:""}" onclick="${onclick}">
+    <span class="v-emoji">${emoji}</span>
+    <span class="v-label">${label}</span>
+    <span class="v-status">${done?"✅ ניתן":"טרם"}</span>
+  </button>`;
+}
+function vitBtnSim(val){
+  return`<button class="vit-btn${val?" done":""}" style="background:${val?"#A8D8F9":"rgba(168,216,249,.2)"};border-color:#A8D8F9;box-shadow:${val?"0 4px 14px rgba(168,216,249,.5)":""}" onclick="toggleSimecol()">
+    <span class="v-emoji">🔵</span>
+    <span class="v-label">סימיקול</span>
+    <span class="v-status">${val?`${val} מ״ל`:"טרם"}</span>
+  </button>`;
+}
+
+function renderEntryRow(e,showAgo,clickable){
+  const color=entryColor(e);
+  const sub=entrySub(e);
+  const by=e.by?`<div class="entry-by">👤 ${e.by}</div>`:"";
+  const editMark=clickable?`<div class="edit">✏️</div>`:"";
+  const onclick=clickable?`onclick="openEditModal('${e.id}')"`:""
+  return`<div class="entry-row${clickable?" clickable":""}" style="background:${color}22;border-color:${color}" ${onclick}>
+    <div class="entry-emoji">${entryEmoji(e)}</div>
+    <div class="entry-info">
+      <div class="entry-label">${entryLabel(e)}</div>
+      ${sub?`<div class="entry-sub">${sub}</div>`:""}
+      ${by}
+    </div>
+    <div class="entry-time">
+      <div class="t">${fmtTime(e.time)}</div>
+      ${showAgo?`<div class="ago">${timeAgo(e.time)}</div>`:""}
+      ${editMark}
+    </div>
+  </div>`;
+}
+
+function renderHistory(){
+  const filters=[
+    {v:"all",l:"הכל"},{v:"feeding",l:"🍼 האכלות"},{v:"diaper",l:"👶 חיתולים"},
+    {v:"vitamin",l:"💊 ויטמינים"},{v:"medicine",l:"🧴 תרופות"}
+  ];
+  document.getElementById("history-filters").innerHTML=filters.map(f=>`
+    <button class="chip${histFilter===f.v?" active":""}" onclick="setHistFilter('${f.v}')">${f.l}</button>
+  `).join("");
+
+  let entries=histFilter==="all"?DATA.entries:DATA.entries.filter(e=>e.category===histFilter);
+  const grouped={};
+  entries.forEach(e=>{const d=e.time.slice(0,10);if(!grouped[d])grouped[d]=[];grouped[d].push(e);});
+  const dates=Object.keys(grouped).sort((a,b)=>b.localeCompare(a));
+
+  if(dates.length===0){document.getElementById("history-list").innerHTML=`<div class="empty">אין רשומות עדיין 🌱</div>`;return;}
+  document.getElementById("history-list").innerHTML=dates.map(d=>`
+    <div style="margin-bottom:18px">
+      <div style="font-size:13px;font-weight:700;color:#9B8AAD;margin-bottom:8px">${fmtDate(d)}</div>
+      ${grouped[d].sort((a,b)=>b.time.localeCompare(a.time)).map(e=>renderEntryRow(e,false,true)).join("")}
+    </div>
+  `).join("");
+}
+
+function renderVitamins(){
+  const today=todayStr();
+  const tv=DATA.vitamins[today]||{};
+  const tve=DATA.entries.filter(e=>e.category==="vitamin"&&e.time.slice(0,10)===today);
+  const sC=tve.filter(e=>e.key==="simecol").length;
+  const vDC=tve.filter(e=>e.key==="vitD").length;
+  const iC=tve.filter(e=>e.key==="iron").length;
+
+  function vitBtnV(emoji,label,done,color,onclick,count){
+    return`<button class="vit-btn${done?" done":""}" style="background:${done?color:color+"33"};border-color:${color};box-shadow:${done?`0 4px 14px ${color}88`:""};position:relative" onclick="${onclick}">
+      ${count>1?`<span class="v-count">×${count}</span>`:""}
+      <span class="v-emoji">${emoji}</span>
+      <span class="v-label">${label}</span>
+      <span class="v-status">${done?"✅ ניתן":"טרם"}</span>
+    </button>`;
+  }
+
+  document.getElementById("vit-today-row").innerHTML=`
+    ${vitBtnV("☀️","ויטמין D",!!tv.vitD,"#FFE99A","giveVit('vitD')",vDC)}
+    ${vitBtnV("🩸","ברזל",!!tv.iron,"#FFCBA4","giveVit('iron')",iC)}
+    <button class="vit-btn${tv.simecol?" done":""}" style="background:${tv.simecol?"#A8D8F9":"rgba(168,216,249,.2)"};border-color:#A8D8F9;position:relative" onclick="toggleSimecol()">
+      ${sC>1?`<span class="v-count">×${sC}</span>`:""}
+      <span class="v-emoji">🔵</span><span class="v-label">סימיקול</span>
+      <span class="v-status">${tv.simecol?`${tv.simecol} מ״ל`:"טרם"}</span>
+    </button>
+  `;
+
+  const sl=document.getElementById("simecol-count-label");
+  if(sC>1){sl.style.display="";sl.textContent=`🔵 סימיקול ניתן ${sC} פעם היום`;}
+  else sl.style.display="none";
+
+  // History
+  const dates=Object.keys(DATA.vitamins).sort((a,b)=>b.localeCompare(a)).slice(0,14);
+  document.getElementById("vit-history").innerHTML=dates.length===0?`<div class="empty">אין נתונים עדיין</div>`:dates.map(d=>{
+    const v=DATA.vitamins[d]||{};
+    return`<div class="vit-history-row">
+      <span style="font-size:13px;font-weight:700;color:#9B8AAD">${fmtDate(d)}</span>
+      <div class="vit-icons">
+        <div class="vi"><span style="opacity:${v.vitD?1:.18}">☀️</span></div>
+        <div class="vi"><span style="opacity:${v.iron?1:.18}">🩸</span></div>
+        <div class="vi"><span style="opacity:${v.simecol?1:.18}">🔵</span>${v.simecol?`<small>${v.simecol}מ״ל</small>`:""}</div>
       </div>
-      {isVit&&(<>{entry.key==="simecol"?(<><Lbl>כמות מ״ל:</Lbl><div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:12}}>{[0.2,0.3,0.4].map(v=><button key={v} onClick={()=>setVitValue(v)} style={{background:vitValue===v?C.blue:C.blue+"44",border:`2.5px solid ${C.blue}`,borderRadius:14,padding:"14px 6px",cursor:"pointer",fontFamily:"inherit"}}><div style={{fontSize:22,fontWeight:900,color:C.text}}>{v}</div><div style={{fontSize:11,color:C.soft,marginTop:2}}>מ״ל</div>{vitValue===v&&<div style={{fontSize:10}}>✅</div>}</button>)}</div><input type="number" step="0.1" value={typeof vitValue==="number"&&![0.2,0.3,0.4].includes(vitValue)?vitValue:""} onChange={e=>setVitValue(parseFloat(e.target.value))} placeholder="כמות אחרת..." style={{...inputSt(),marginBottom:8}}/></>):(<div style={{background:(entry.key==="vitD"?C.yellow:C.peach)+"33",borderRadius:14,padding:14,textAlign:"center",marginBottom:8}}><div style={{fontSize:28}}>{entry.key==="vitD"?"☀️":"🩸"}</div><div style={{fontWeight:800,color:C.text}}>{entry.key==="vitD"?"ויטמין D":"ברזל"} ✅</div></div>)}</>)}
-      {isDrug&&<div style={{background:C.purple+"22",borderRadius:14,padding:14,marginBottom:8,textAlign:"center"}}><div style={{fontSize:28}}>💊</div><div style={{fontWeight:800,color:C.text}}>{entry.name}</div><div style={{fontSize:12,color:C.soft,marginTop:4}}>ניתן לשנות שעה ומבצע בלבד</div></div>}
-      {isF&&(<><Lbl>סוג האכלה:</Lbl><div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:16}}>{[{v:"breast",e:"🤱",l:"שד",c:C.pink},{v:"bottle",e:"🍼",l:"בקבוק",c:C.peach},{v:"pump",e:"🫙",l:"שאיבה",c:C.teal}].map(o=><button key={o.v} onClick={()=>setType(o.v)} style={{background:type===o.v?o.c:o.c+"22",border:`2px solid ${o.c}`,borderRadius:14,padding:"10px 4px",cursor:"pointer",fontWeight:800,fontFamily:"inherit",fontSize:13,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}><span style={{fontSize:22}}>{o.e}</span>{o.l}</button>)}</div>{type==="breast"?(<><Lbl>דקות:</Lbl><div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:10}}>{[5,10,15,20,25,30].map(v=><button key={v} onClick={()=>setDuration(v)} style={{background:duration===v?C.pink:C.pink+"33",border:`2px solid ${C.pink}`,borderRadius:10,padding:"8px 14px",cursor:"pointer",fontWeight:800,fontFamily:"inherit"}}>{v}</button>)}</div><input type="number" value={duration} onChange={e=>setDuration(e.target.value)} placeholder="דקות..." style={{...inputSt(),marginBottom:4}}/></>):(<><Lbl>{type==="pump"?"מ״ל שנשאב:":"מ״ל:"}</Lbl><div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:10}}>{(type==="pump"?[30,40,50,60,70,80,90]:[60,70,80,90,100,120]).map(v=><button key={v} onClick={()=>setMl(v)} style={{background:ml===v?(type==="pump"?C.teal:C.peach):(type==="pump"?C.teal:C.peach)+"33",border:`2px solid ${type==="pump"?C.teal:C.peach}`,borderRadius:10,padding:"8px 14px",cursor:"pointer",fontWeight:800,fontFamily:"inherit"}}>{v}</button>)}</div><input type="number" value={ml} onChange={e=>setMl(e.target.value)} placeholder='מ"ל...' style={{...inputSt(),marginBottom:4}}/></>)}</>)}
-      {!isF&&!isVit&&!isDrug&&(<><Lbl>סוג חיתול:</Lbl><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>{[{v:"wet",e:"💧",l:"רטוב"},{v:"dirty",e:"💩",l:"מלוכלך"},{v:"both",e:"💧💩",l:"שניהם"},{v:"dry",e:"✨",l:"יבש"}].map(o=><button key={o.v} onClick={()=>setType(o.v)} style={{background:type===o.v?C.mint:C.mint+"22",border:`2px solid ${C.mint}`,borderRadius:14,padding:"13px 8px",cursor:"pointer",fontWeight:800,fontFamily:"inherit",fontSize:14}}>{o.e} {o.l}</button>)}</div></>)}
-      <div style={{marginTop:16,marginBottom:4}}>
-        <Lbl>👤 מי ביצע?</Lbl>
-        <div style={{display:"flex",gap:8,marginBottom:8}}>
-          {["חן","רחל"].map(name=><button key={name} onClick={()=>setPerformer(name)} style={{flex:1,padding:"10px 6px",borderRadius:12,border:`2px solid ${C.lavender}`,background:performer===name?C.lavender:C.lavender+"22",cursor:"pointer",fontWeight:800,fontSize:14,color:C.text,fontFamily:"inherit"}}>{name==="חן"?"👨 ":"👩 "}{name}</button>)}
+    </div>`;
+  }).join("");
+}
+
+function renderMedical(){
+  const future=(DATA.medicalRecords||[]).filter(r=>r.future).sort((a,b)=>a.date.localeCompare(b.date));
+  const past=(DATA.medicalRecords||[]).filter(r=>!r.future).sort((a,b)=>b.date.localeCompare(a.date));
+
+  function recCard(r){
+    return`<div class="record-card" style="border:1.5px solid ${r.future?"#A8F0E8":"#C5B4E8"}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div class="rc-title">${r.title}</div>
+          <div class="rc-sub">📅 ${fmtFullDate(r.date)}</div>
+          ${r.doctor?`<div class="rc-sub">👨‍⚕️ ${r.doctor}</div>`:""}
+          ${r.location?`<div class="rc-sub">📍 ${r.location}</div>`:""}
         </div>
-        <input value={["חן","רחל"].includes(performer)?"":performer} onChange={e=>setPerformer(e.target.value)} placeholder="👤 אחר — הכנס שם..." style={{...inputSt()}}/>
-      </div>
-      <button onClick={handleSave} style={{width:"100%",marginTop:18,padding:"14px",borderRadius:16,background:`linear-gradient(135deg,${C.pink},${C.lavender})`,border:"none",cursor:"pointer",fontSize:16,fontWeight:900,color:C.white,fontFamily:"inherit"}}>שמור שינויים ✅</button>
-      {!confirmDel?<button onClick={()=>setConfirmDel(true)} style={{width:"100%",marginTop:10,padding:"12px",borderRadius:14,background:"#fff0f0",border:`1.5px solid ${C.red}`,cursor:"pointer",fontSize:14,fontWeight:700,color:C.red,fontFamily:"inherit"}}>🗑 מחק רשומה זו</button>
-        :<div style={{marginTop:10,background:"#fff0f0",borderRadius:14,padding:14,border:`1.5px solid ${C.red}`}}><div style={{textAlign:"center",fontWeight:700,color:C.red,marginBottom:12}}>בטוח למחוק?</div><div style={{display:"flex",gap:10}}><button onClick={()=>onDelete(entry.id)} style={{flex:1,padding:"11px",borderRadius:12,background:C.red,border:"none",cursor:"pointer",fontSize:14,fontWeight:900,color:C.white,fontFamily:"inherit"}}>כן, מחק</button><button onClick={()=>setConfirmDel(false)} style={{flex:1,padding:"11px",borderRadius:12,background:C.bg,border:`1.5px solid ${C.soft}`,cursor:"pointer",fontSize:14,fontWeight:700,color:C.soft,fontFamily:"inherit"}}>ביטול</button></div></div>}
-    </Sheet>
-  );
-}
-
-function EntryRow({entry,fallback,onEdit,showAgo}){
-  if(!entry)return <div style={{background:"#f5f0ff",borderRadius:14,padding:"12px 14px",color:C.soft,fontSize:13,textAlign:"center",marginBottom:8}}>{fallback}</div>;
-  const {emoji,label,sub,color}=entryInfo(entry);
-  const canEdit=!!onEdit;
-  return(
-    <div onClick={()=>canEdit&&onEdit(entry)} style={{background:color+"22",border:`1.5px solid ${color}`,borderRadius:14,padding:"12px 14px",display:"flex",alignItems:"center",gap:12,marginBottom:8,cursor:canEdit?"pointer":"default"}}>
-      <span style={{fontSize:24}}>{emoji}</span>
-      <div style={{flex:1}}>
-        <div style={{fontWeight:800,color:C.text,fontSize:14}}>{label}</div>
-        {sub&&<div style={{fontSize:13,color:C.soft,fontWeight:600}}>{sub}</div>}
-        {entry.by&&<div style={{fontSize:11,color:C.lavender,fontWeight:700,marginTop:2}}>👤 {entry.by}</div>}
-      </div>
-      <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:2}}>
-        <div style={{fontSize:13,fontWeight:800,color:C.text}}>{formatTime(entry.time)}</div>
-        {showAgo&&<div style={{fontSize:11,color:C.soft}}>{timeAgo(entry.time)}</div>}
-        {canEdit&&<span style={{fontSize:11,color:C.lavender,fontWeight:700}}>✏️</span>}
-      </div>
-    </div>
-  );
-}
-
-function WhoModal({pendingEntry, onDone, onClose}){
-  const [showCustom,setShowCustom]=useState(false);
-  const [customName,setCustomName]=useState("");
-  return(
-    <Sheet title="מי ביצע? 👤" onClose={onClose}>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
-        {["חן","רחל"].map(name=>(
-          <button key={name} onClick={()=>onDone(name)}
-            style={{background:C.lavender+"44",border:`2.5px solid ${C.lavender}`,borderRadius:18,padding:"22px 10px",cursor:"pointer",fontFamily:"inherit",display:"flex",flexDirection:"column",alignItems:"center",gap:8}}>
-            <span style={{fontSize:34}}>{name==="חן"?"👨":"👩"}</span>
-            <span style={{fontSize:18,fontWeight:900,color:C.text}}>{name}</span>
-          </button>
-        ))}
-      </div>
-      {!showCustom
-        ? <button onClick={()=>setShowCustom(true)}
-            style={{width:"100%",padding:"14px",borderRadius:16,background:C.bg,border:`2px solid ${C.soft}`,cursor:"pointer",fontSize:16,fontWeight:800,color:C.soft,fontFamily:"inherit"}}>
-            👤 אחר — מי זה?
-          </button>
-        : <div style={{background:C.lavender+"22",border:`2px solid ${C.lavender}`,borderRadius:16,padding:"16px"}}>
-            <Lbl>הכנס שם:</Lbl>
-            <div style={{display:"flex",gap:10}}>
-              <input
-                autoFocus
-                value={customName}
-                onChange={e=>setCustomName(e.target.value)}
-                onKeyDown={e=>e.key==="Enter"&&customName.trim()&&onDone(customName.trim())}
-                placeholder="שם המבצע..."
-                style={{flex:1,...inputSt()}}
-              />
-              <button
-                onClick={()=>{if(customName.trim())onDone(customName.trim());}}
-                disabled={!customName.trim()}
-                style={{background:customName.trim()?C.lavender:C.soft,border:"none",borderRadius:12,padding:"12px 18px",cursor:customName.trim()?"pointer":"not-allowed",fontWeight:900,fontSize:18,fontFamily:"inherit"}}>
-                ✅
-              </button>
-            </div>
-          </div>
-      }
-    </Sheet>
-  );
-}
-
-function QuickPicker({options,color,unit,placeholder,onSelect}){
-  const [custom,setCustom]=useState("");
-  return(<div>
-    <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:14}}>
-      {options.map(v=><button key={v} onClick={()=>onSelect(v)} style={{background:color+"44",border:`2px solid ${color}`,borderRadius:14,padding:"14px 6px",cursor:"pointer",fontWeight:900,fontSize:17,color:C.text,fontFamily:"inherit"}}>{v}<div style={{fontSize:11,fontWeight:600,color:C.soft,marginTop:2}}>{unit}</div></button>)}
-    </div>
-    <Lbl>אחר:</Lbl>
-    <div style={{display:"flex",gap:10}}>
-      <input type="number" value={custom} onChange={e=>setCustom(e.target.value)} placeholder={placeholder} style={{flex:1,...inputSt()}}/>
-      <button onClick={()=>{if(custom)onSelect(Number(custom));}} style={{background:color,border:"none",borderRadius:12,padding:"12px 18px",cursor:"pointer",fontWeight:900,fontSize:18,fontFamily:"inherit"}}>✅</button>
-    </div>
-  </div>);
-}
-
-function CustomInput({color,placeholder,step,onSelect}){
-  const [val,setVal]=useState("");
-  return(<div style={{display:"flex",gap:10}}>
-    <input type="number" step={step||"1"} value={val} onChange={e=>setVal(e.target.value)} placeholder={placeholder} style={{flex:1,...inputSt()}}/>
-    <button onClick={()=>{if(val){onSelect(parseFloat(val));setVal("");}}} style={{background:color,border:"none",borderRadius:12,padding:"11px 16px",cursor:"pointer",fontWeight:900,fontSize:17,fontFamily:"inherit"}}>✅</button>
-  </div>);
-}
-
-function Sheet({title,onClose,children}){
-  return(
-    <div style={{position:"fixed",inset:0,background:"rgba(61,43,79,0.38)",zIndex:200,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={onClose}>
-      <div style={{background:C.white,borderRadius:"28px 28px 0 0",padding:"24px 20px 44px",width:"100%",maxWidth:480,boxShadow:"0 -8px 40px rgba(0,0,0,0.13)",maxHeight:"92vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}}>
-          <span style={{fontSize:19,fontWeight:900,color:C.text}}>{title}</span>
-          <button onClick={onClose} style={{background:"#f0eaf7",border:"none",borderRadius:10,width:34,height:34,cursor:"pointer",fontSize:17}}>✕</button>
+        <div class="record-actions">
+          <button class="edit-sm" onclick="openSheet('record-form','${r.id}')">✏️</button>
+          <button class="del-sm" onclick="deleteRecord('${r.id}')">🗑</button>
         </div>
-        {children}
+      </div>
+      ${r.notes?`<details style="margin-top:6px"><summary style="font-size:12px;color:#C5B4E8;font-weight:700;cursor:pointer">הצג הערות ▼</summary><div style="font-size:13px;color:#9B8AAD;margin-top:4px;line-height:1.5">${r.notes}</div></details>`:""}
+    </div>`;
+  }
+
+  document.getElementById("future-records").innerHTML=future.length?`<div style="font-size:13px;font-weight:700;color:#A8F0E8;margin-bottom:8px">🗓 בדיקות עתידיות</div>${future.map(recCard).join("")}`:"";
+  document.getElementById("past-records").innerHTML=past.length===0?`<div class="empty">אין בדיקות עדיין 🩺</div>`:past.map(recCard).join("");
+
+  const meds=DATA.medicines||[];
+  document.getElementById("meds-list").innerHTML=meds.length===0?`<div class="empty">אין תרופות קבועות עדיין 💊</div>`:meds.map(m=>`
+    <div style="background:#fff;border:1.5px solid #D4A8F9;border-radius:16px;padding:14px 16px;margin-bottom:10px;box-shadow:0 2px 10px rgba(61,43,79,.1)">
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="font-size:28px">${m.medType==="משחה"?"🧴":m.medType==="טיפות"?"💧":"💊"}</span>
+        <div style="flex:1">
+          <div style="font-weight:900;color:#3D2B4F;font-size:15px">${m.name}</div>
+          ${m.dose?`<div style="font-size:12px;color:#9B8AAD">${m.dose}</div>`:""}
+          ${m.frequency?`<div style="font-size:12px;color:#9B8AAD">${m.frequency}</div>`:""}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <button class="edit-sm" onclick="openSheet('med-form','${m.id}')">✏️</button>
+          <button class="del-sm" onclick="deleteMed('${m.id}')">🗑</button>
+        </div>
       </div>
     </div>
-  );
+  `).join("");
 }
 
-function Section({title,children}){return <div style={{marginBottom:22}}><div style={{fontSize:15,fontWeight:900,color:C.text,marginBottom:12}}>{title}</div>{children}</div>;}
-function StatCard({emoji,val,label,color}){return <div style={{background:color+"33",border:`2px solid ${color}`,borderRadius:14,padding:"10px 4px",textAlign:"center"}}><div style={{fontSize:18}}>{emoji}</div><div style={{fontSize:18,fontWeight:900,color:C.text}}>{val}</div><div style={{fontSize:10,color:C.soft,fontWeight:600}}>{label}</div></div>;}
-function ActionBtn({emoji,label,color,onClick}){return <button onClick={onClick} style={{background:color+"33",border:`2px solid ${color}`,borderRadius:18,padding:"20px 10px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:8,width:"100%",fontFamily:"inherit",boxShadow:`0 3px 12px ${color}44`}}><span style={{fontSize:36}}>{emoji}</span><span style={{fontSize:16,fontWeight:800,color:C.text}}>{label}</span></button>;}
-function BigBtn({emoji,label,color,onClick}){return <button onClick={onClick} style={{background:color+"33",border:`2px solid ${color}`,borderRadius:18,padding:"22px 10px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:8,width:"100%",fontFamily:"inherit"}}><span style={{fontSize:34}}>{emoji}</span><span style={{fontSize:16,fontWeight:800,color:C.text}}>{label}</span></button>;}
-function VitBtn({emoji,label,done,sub,color,onClick}){return <button onClick={onClick} style={{flex:1,background:done?color:color+"33",border:`2px solid ${color}`,borderRadius:16,padding:"12px 6px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3,transition:"all 0.2s",fontFamily:"inherit",boxShadow:done?`0 4px 14px ${color}88`:"none"}}><span style={{fontSize:24}}>{emoji}</span><span style={{fontSize:11,fontWeight:800,color:C.text}}>{label}</span>{sub?<span style={{fontSize:11,fontWeight:700,color:C.text}}>{sub}</span>:<span style={{fontSize:10,fontWeight:700,color:done?C.text:C.soft}}>{done?"✅ ניתן":"טרם"}</span>}</button>;}
-function Empty({text}){return <div style={{textAlign:"center",color:C.soft,padding:"30px 0",fontSize:15}}>{text}</div>;}
-function Lbl({children}){return <div style={{fontSize:13,fontWeight:700,color:C.soft,marginBottom:8}}>{children}</div>;}
-function chip(active,color){return{padding:"8px 16px",borderRadius:20,border:`2px solid ${color}`,background:active?color:color+"22",cursor:"pointer",fontWeight:700,fontSize:13,color:C.text,fontFamily:"inherit"};}
-function inputSt(){return{width:"100%",padding:"12px 14px",borderRadius:12,border:`2px solid ${C.lavender}`,fontSize:15,color:C.text,background:C.bg,outline:"none",fontFamily:"inherit",boxSizing:"border-box"};}
+function updateAlert(){
+  const lastF=DATA.entries.find(e=>e.category==="feeding");
+  const banner=document.getElementById("alert-banner");
+  if(!lastF){banner.className="";banner.style.display="none";return;}
+  const mins=Math.floor((Date.now()-new Date(lastF.time))/60000);
+  const hours=mins/60;
+  if(hours<ALERT_HOURS){banner.className="";banner.style.display="none";return;}
+  const h=Math.floor(mins/60),m=mins%60;
+  const t=m===0?`${h} שעות`:`${h} ש' ${m} דק'`;
+  document.getElementById("alert-title").textContent=hours>=5?"⚠️ דחוף! מילה רחל רעבה!":"🔔 זמן האכלה!";
+  document.getElementById("alert-sub").textContent=`עברו ${t} מהאכלה האחרונה • ${fmtTime(lastF.time)}`;
+  banner.className="show "+(hours>=5?"urgent":"warn");
+  banner.style.display="";
+}
 
-ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+// ── ACTIONS ───────────────────────────────────────────────────────────────────
+function addEntry(entry){
+  DATA.entries.unshift({...entry,id:Date.now().toString(),time:nowIso()});
+  saveData();renderAll();
+}
+function giveVit(key){
+  const today=todayStr();
+  if(!DATA.vitamins[today])DATA.vitamins[today]={};
+  DATA.vitamins[today][key]=true;
+  DATA.entries.unshift({id:Date.now().toString(),time:nowIso(),category:"vitamin",key,value:true,by:""});
+  saveData();renderAll();showToast("✅ עודכן!");
+}
+function giveSimecol(v){
+  if(!v||isNaN(v))return;
+  const today=todayStr();
+  if(!DATA.vitamins[today])DATA.vitamins[today]={};
+  DATA.vitamins[today].simecol=v;
+  DATA.entries.unshift({id:Date.now().toString(),time:nowIso(),category:"vitamin",key:"simecol",value:v,by:""});
+  document.getElementById("simecol-custom").value="";
+  document.getElementById("simecol-picker").style.display="none";
+  showSim=false;
+  saveData();renderAll();showToast("✅ סימיקול עודכן!");
+}
+function toggleSimecol(){
+  showSim=!showSim;
+  document.getElementById("simecol-picker").style.display=showSim?"":"none";
+}
 
-ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
+// ── WHO MODAL ─────────────────────────────────────────────────────────────────
+function openWho(entry){
+  pendingEntry=entry;
+  openSheet("who");
+}
+function submitWho(name){
+  if(!pendingEntry)return;
+  closeSheet();
+  if(pendingEntry._isVit){
+    const key=pendingEntry.key,val=pendingEntry.value;
+    const today=todayStr();
+    if(!DATA.vitamins[today])DATA.vitamins[today]={};
+    DATA.vitamins[today][key]=val;
+    DATA.entries.unshift({id:Date.now().toString(),time:nowIso(),category:"vitamin",key,value:val,by:name});
+    saveData();renderAll();showToast("✅ עודכן!");
+  } else if(pendingEntry._isMed){
+    const m=pendingEntry._med;
+    DATA.entries.unshift({id:Date.now().toString(),time:nowIso(),category:"medicine",name:m.name,medType:m.medType,dose:m.dose,by:name});
+    saveData();renderAll();showToast(`✅ ${m.name} נרשם!`);
+  } else {
+    addEntry({...pendingEntry,by:name});
+    showToast("✅ נרשם!");
+  }
+  pendingEntry=null;
+}
+function submitWhoCustom(){
+  const n=document.getElementById("custom-who-name").value.trim();
+  if(!n)return;
+  submitWho(n);
+}
+
+// ── SHEETS ────────────────────────────────────────────────────────────────────
+function openSheet(type, id){
+  const sheet=document.getElementById("sheet");
+  const overlay=document.getElementById("overlay");
+  overlay.classList.add("show");
+
+  if(type==="feeding-type"){
+    sheet.innerHTML=`
+      <div class="sheet-header"><span class="sheet-title">איך האכלה? 🍼</span><button class="sheet-close" onclick="closeSheet()">✕</button></div>
+      <div class="quick-grid cols3">
+        <button class="big-btn" style="background:rgba(249,168,201,.2);border-color:#F9A8C9" onclick="openSheet('feeding-breast')"><span class="b-emoji">🤱</span><span class="b-label">שד</span></button>
+        <button class="big-btn" style="background:rgba(255,203,164,.2);border-color:#FFCBA4" onclick="openSheet('feeding-bottle')"><span class="b-emoji">🍼</span><span class="b-label">בקבוק</span></button>
+        <button class="big-btn" style="background:rgba(168,240,232,.2);border-color:#A8F0E8" onclick="openSheet('feeding-pump')"><span class="b-emoji">🫙</span><span class="b-label">שאיבה</span></button>
+      </div>`;
+  }
+  else if(type==="feeding-breast"){
+    sheet.innerHTML=`
+      <div class="sheet-header"><span class="sheet-title">האכלת שד 🤱</span><button class="sheet-close" onclick="closeSheet()">✕</button></div>
+      <div class="lbl">כמה דקות ינקה?</div>
+      <div class="quick-grid cols3">${[5,10,15,20,25,30].map(v=>`<button class="quick-btn" style="background:rgba(249,168,201,.27);border-color:#F9A8C9" onclick="openWho({category:'feeding',type:'breast',duration:${v}})">${v}<span class="unit">דק'</span></button>`).join("")}</div>
+      <div class="lbl">אחר:</div>
+      <div class="inp-row"><input class="inp" type="number" id="breast-custom" placeholder="הכנס דקות..."/><button style="background:#F9A8C9;border:none;border-radius:12px;padding:12px 18px;font-size:18px;font-weight:900" onclick="openWho({category:'feeding',type:'breast',duration:parseInt(document.getElementById('breast-custom').value)})">✅</button></div>`;
+  }
+  else if(type==="feeding-bottle"){
+    sheet.innerHTML=`
+      <div class="sheet-header"><span class="sheet-title">האכלת בקבוק 🍼</span><button class="sheet-close" onclick="closeSheet()">✕</button></div>
+      <div class="lbl">כמה מ״ל שתתה?</div>
+      <div class="quick-grid cols3">${[60,70,80,90,100,120].map(v=>`<button class="quick-btn" style="background:rgba(255,203,164,.27);border-color:#FFCBA4" onclick="openWho({category:'feeding',type:'bottle',ml:${v}})">${v}<span class="unit">מ״ל</span></button>`).join("")}</div>
+      <div class="lbl">אחר:</div>
+      <div class="inp-row"><input class="inp" type="number" id="bottle-custom" placeholder="כמות אחרת..."/><button style="background:#FFCBA4;border:none;border-radius:12px;padding:12px 18px;font-size:18px;font-weight:900" onclick="openWho({category:'feeding',type:'bottle',ml:parseInt(document.getElementById('bottle-custom').value)})">✅</button></div>`;
+  }
+  else if(type==="feeding-pump"){
+    sheet.innerHTML=`
+      <div class="sheet-header"><span class="sheet-title">שאיבה 🫙</span><button class="sheet-close" onclick="closeSheet()">✕</button></div>
+      <div class="lbl">כמה מ״ל נשאב?</div>
+      <div class="quick-grid cols3">${[30,40,50,60,70,80,90].map(v=>`<button class="quick-btn" style="background:rgba(168,240,232,.27);border-color:#A8F0E8" onclick="openWho({category:'feeding',type:'pump',ml:${v}})">${v}<span class="unit">מ״ל</span></button>`).join("")}</div>
+      <div class="lbl">אחר:</div>
+      <div class="inp-row"><input class="inp" type="number" id="pump-custom" placeholder="כמות אחרת..."/><button style="background:#A8F0E8;border:none;border-radius:12px;padding:12px 18px;font-size:18px;font-weight:900" onclick="openWho({category:'feeding',type:'pump',ml:parseInt(document.getElementById('pump-custom').value)})">✅</button></div>`;
+  }
+  else if(type==="diaper"){
+    sheet.innerHTML=`
+      <div class="sheet-header"><span class="sheet-title">חיתול 👶</span><button class="sheet-close" onclick="closeSheet()">✕</button></div>
+      <div class="quick-grid cols2" style="margin-top:8px">
+        ${[{v:"wet",e:"💧",l:"רטוב"},{v:"dirty",e:"💩",l:"מלוכלך"},{v:"both",e:"💧💩",l:"שניהם"},{v:"dry",e:"✨",l:"יבש"}].map(o=>`<button class="big-btn" style="background:rgba(158,223,204,.2);border-color:#9EDFCC" onclick="openWho({category:'diaper',type:'${o.v}'})"><span class="b-emoji">${o.e}</span><span class="b-label">${o.l}</span></button>`).join("")}
+      </div>`;
+  }
+  else if(type==="simecol-modal"){
+    sheet.innerHTML=`
+      <div class="sheet-header"><span class="sheet-title">סימיקול 🔵</span><button class="sheet-close" onclick="closeSheet()">✕</button></div>
+      <div class="lbl">כמה מ״ל? (ניתן מספר פעמים)</div>
+      <div class="quick-grid cols3">${[0.2,0.3,0.4].map(v=>`<button class="quick-btn" style="background:rgba(168,216,249,.27);border-color:#A8D8F9" onclick="openWho({category:'vitamin',key:'simecol',value:${v},_isVit:true})">${v}<span class="unit">מ״ל</span></button>`).join("")}</div>
+      <div class="lbl">אחר:</div>
+      <div class="inp-row"><input class="inp" type="number" step="0.1" id="sim-custom" placeholder="כמות אחרת..."/><button style="background:#A8D8F9;border:none;border-radius:12px;padding:12px 18px;font-size:18px;font-weight:900" onclick="openWho({category:'vitamin',key:'simecol',value:parseFloat(document.getElementById('sim-custom').value),_isVit:true})">✅</button></div>`;
+  }
+  else if(type==="who"){
+    sheet.innerHTML=`
+      <div class="sheet-header"><span class="sheet-title">מי ביצע? 👤</span><button class="sheet-close" onclick="closeSheet()">✕</button></div>
+      <div class="who-grid">
+        <button class="who-btn" onclick="submitWho('חן')"><span class="who-emoji">👨</span><span class="who-name">חן</span></button>
+        <button class="who-btn" onclick="submitWho('רחל')"><span class="who-emoji">👩</span><span class="who-name">רחל</span></button>
+      </div>
+      <div id="who-other-area">
+        <button class="other-btn" onclick="showCustomWho()">👤 אחר — מי זה?</button>
+      </div>`;
+  }
+  else if(type==="record-form"){
+    const rec=id?DATA.medicalRecords.find(r=>r.id==id):null;
+    sheet.innerHTML=`
+      <div class="sheet-header"><span class="sheet-title">${rec?"עריכת בדיקה ✏️":"הוספת בדיקה 🩺"}</span><button class="sheet-close" onclick="closeSheet()">✕</button></div>
+      <div style="display:flex;gap:10px;margin-bottom:14px">
+        <button id="rb-past" class="med-tab${!rec?.future?" active":""}" style="border-color:#C5B4E8;background:${!rec?.future?"#C5B4E8":"rgba(197,180,232,.1)"}" onclick="document.getElementById('rb-past').classList.add('active');document.getElementById('rb-future').classList.remove('active')">📁 בוצעה</button>
+        <button id="rb-future" class="med-tab${rec?.future?" active":""}" style="border-color:#A8F0E8;background:${rec?.future?"#A8F0E8":"rgba(168,240,232,.1)"}" onclick="document.getElementById('rb-future').classList.add('active');document.getElementById('rb-past').classList.remove('active')">🗓 עתידית</button>
+      </div>
+      <div class="lbl">שם הבדיקה:</div><input class="inp" id="rf-title" value="${rec?.title||""}" placeholder="ביקור שגרתי, בדיקת דם..." style="margin-bottom:12px"/>
+      <div class="lbl">תאריך:</div><input class="inp" type="date" id="rf-date" value="${rec?.date||""}" style="margin-bottom:12px;direction:ltr"/>
+      <div class="lbl">רופא:</div><input class="inp" id="rf-doctor" value="${rec?.doctor||""}" placeholder="שם הרופא..." style="margin-bottom:12px"/>
+      <div class="lbl">מיקום:</div><input class="inp" id="rf-location" value="${rec?.location||""}" placeholder="בית חולים..." style="margin-bottom:12px"/>
+      <div class="lbl">ממצאים / הערות / מרשם:</div><textarea class="inp" id="rf-notes" rows="4" placeholder="פרטים, תוצאות..." style="margin-bottom:16px">${rec?.notes||""}</textarea>
+      <button class="save-btn" style="background:linear-gradient(135deg,#A8F0E8,#9EDFCC);color:#3D2B4F" onclick="saveRecord('${rec?.id||""}')">שמור בדיקה ✅</button>`;
+  }
+  else if(type==="med-form"){
+    const m=id?DATA.medicines.find(x=>x.id==id):null;
+    const types=["תרופה","משחה","טיפות","אחר"];
+    const emojis={"תרופה":"💊","משחה":"🧴","טיפות":"💧","אחר":"🩺"};
+    sheet.innerHTML=`
+      <div class="sheet-header"><span class="sheet-title">${m?"עריכת תרופה ✏️":"הוספת תרופה 💊"}</span><button class="sheet-close" onclick="closeSheet()">✕</button></div>
+      <div class="lbl">סוג:</div>
+      <div class="med-type-row">${types.map(t=>`<button class="med-type-btn${(m?.medType||"תרופה")===t?" active":""}" id="mt-${t}" onclick="selectMedType('${t}')">${emojis[t]}<br/>${t}</button>`).join("")}</div>
+      <input type="hidden" id="mf-type" value="${m?.medType||"תרופה"}"/>
+      <div class="lbl">שם התרופה:</div><input class="inp" id="mf-name" value="${m?.name||""}" placeholder="שם התרופה..." style="margin-bottom:14px"/>
+      <div class="lbl">מינון:</div><input class="inp" id="mf-dose" value="${m?.dose||""}" placeholder="2.5 מ״ל פעמיים ביום..." style="margin-bottom:14px"/>
+      <div class="lbl">תדירות:</div>
+      <div class="freq-row">${["פעם ביום","פעמיים ביום","3 פעמים ביום","לפי הצורך"].map(f=>`<button class="freq-btn${m?.frequency===f?" active":""}" onclick="selectFreq('${f}',this)">${f}</button>`).join("")}</div>
+      <input class="inp" id="mf-freq" value="${m?.frequency||""}" placeholder="או הכנס תדירות..." style="margin-bottom:14px"/>
+      <div class="lbl">הערות:</div><textarea class="inp" id="mf-note" rows="3" placeholder="הוראות שימוש..." style="margin-bottom:16px">${m?.note||""}</textarea>
+      <button class="save-btn" style="background:linear-gradient(135deg,#D4A8F9,#C5B4E8)" onclick="saveMed('${m?.id||""}')">שמור תרופה ✅</button>`;
+  }
+  else if(type==="edit-entry"){
+    const e=DATA.entries.find(x=>x.id==id);
+    if(!e){closeSheet();return;}
+    currentEditEntry=e;
+    renderEditSheet(e);
+  }
+}
+
+function renderEditSheet(e){
+  const sheet=document.getElementById("sheet");
+  const isF=e.category==="feeding";
+  const isVit=e.category==="vitamin";
+  const isMed=e.category==="medicine";
+  const title=isVit?(e.key==="simecol"?"עריכת סימיקול 🔵":e.key==="vitD"?"עריכת ויטמין D ☀️":"עריכת ברזל 🩸"):isMed?`עריכת ${e.name} 💊`:isF?"עריכת האכלה ✏️":"עריכת חיתול ✏️";
+  const d=new Date(e.time);
+  const tval=String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");
+  const dateLabel=d.toLocaleDateString("he-IL",{weekday:"long",day:"numeric",month:"long"});
+
+  let specific="";
+  if(isVit&&e.key==="simecol"){
+    specific=`<div class="lbl" style="margin-top:4px">כמות מ״ל:</div>
+      <div class="quick-grid cols3">${[0.2,0.3,0.4].map(v=>`<button class="quick-btn" id="sv-${v}" style="background:${e.value===v?"#A8D8F9":"rgba(168,216,249,.27)"};border-color:#A8D8F9" onclick="setEditVitVal(${v})">${v}<span class="unit">מ״ל</span></button>`).join("")}</div>
+      <input class="inp" type="number" step="0.1" id="edit-vit-custom" placeholder="כמות אחרת..." style="margin-bottom:4px"/>`;
+  }
+  if(isF){
+    specific=`<div class="lbl">סוג האכלה:</div>
+      <div class="quick-grid cols3" style="margin-bottom:14px">
+        ${[{v:"breast",e:"🤱",l:"שד",c:"#F9A8C9"},{v:"bottle",e:"🍼",l:"בקבוק",c:"#FFCBA4"},{v:"pump",e:"🫙",l:"שאיבה",c:"#A8F0E8"}].map(o=>`<button class="quick-btn" id="et-${o.v}" style="background:${e.type===o.v?o.c:o.c+"44"};border-color:${o.c}" onclick="setEditFeedType('${o.v}')">${o.e}<span class="unit">${o.l}</span></button>`).join("")}
+      </div>
+      <div id="edit-breast-section" style="${e.type==="breast"?"":"display:none"}">
+        <div class="lbl">דקות:</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">${[5,10,15,20,25,30].map(v=>`<button style="background:${e.duration===v?"#F9A8C9":"rgba(249,168,201,.3)"};border:2px solid #F9A8C9;border-radius:10px;padding:8px 14px;font-weight:800" onclick="setEditDuration(${v})">${v}</button>`).join("")}</div>
+        <input class="inp" type="number" id="edit-duration" value="${e.duration||""}" placeholder="דקות..." style="margin-bottom:4px"/>
+      </div>
+      <div id="edit-ml-section" style="${e.type!=="breast"?"":"display:none"}">
+        <div class="lbl" id="edit-ml-label">${e.type==="pump"?"מ״ל שנשאב:":"מ״ל:"}</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px" id="edit-ml-btns">
+          ${(e.type==="pump"?[30,40,50,60,70,80,90]:[60,70,80,90,100,120]).map(v=>`<button style="background:${e.ml===v?(e.type==="pump"?"#A8F0E8":"#FFCBA4"):(e.type==="pump"?"rgba(168,240,232,.3)":"rgba(255,203,164,.3)")};border:2px solid ${e.type==="pump"?"#A8F0E8":"#FFCBA4"};border-radius:10px;padding:8px 14px;font-weight:800" onclick="setEditMl(${v})">${v}</button>`).join("")}
+        </div>
+        <input class="inp" type="number" id="edit-ml" value="${e.ml||""}" placeholder='מ"ל...' style="margin-bottom:4px"/>
+      </div>`;
+  }
+  if(!isF&&!isVit&&!isMed){
+    specific=`<div class="lbl">סוג חיתול:</div>
+      <div class="quick-grid cols2">${[{v:"wet",e:"💧",l:"רטוב"},{v:"dirty",e:"💩",l:"מלוכלך"},{v:"both",e:"💧💩",l:"שניהם"},{v:"dry",e:"✨",l:"יבש"}].map(o=>`<button class="big-btn" id="dt-${o.v}" style="background:${e.type===o.v?"#9EDFCC":"rgba(158,223,204,.2)"};border-color:#9EDFCC" onclick="setEditDiaperType('${o.v}')">${o.e}<br/>${o.l}</button>`).join("")}</div>`;
+  }
+
+  sheet.innerHTML=`
+    <div class="sheet-header"><span class="sheet-title">${title}</span><button class="sheet-close" onclick="closeSheet()">✕</button></div>
+    <div style="background:rgba(197,180,232,.2);border:2px solid #C5B4E8;border-radius:16px;padding:14px 16px;margin-bottom:18px">
+      <div class="lbl">🕐 שעה:</div>
+      <input type="time" id="edit-time" value="${tval}" style="width:100%;padding:12px;border-radius:12px;border:2px solid #C5B4E8;font-size:24px;font-weight:900;color:#3D2B4F;background:#fff;text-align:center;direction:ltr"/>
+      <div style="font-size:11px;color:#9B8AAD;margin-top:6px;text-align:center">${dateLabel}</div>
+    </div>
+    ${specific}
+    <div style="margin-top:16px;margin-bottom:4px">
+      <div class="lbl">👤 מי ביצע?</div>
+      <div class="performer-btns">
+        <button class="perf-btn${e.by==="חן"?" active":""}" id="pf-chen" onclick="setPerformer('חן')">👨 חן</button>
+        <button class="perf-btn${e.by==="רחל"?" active":""}" id="pf-rachel" onclick="setPerformer('רחל')">👩 רחל</button>
+      </div>
+      <input class="inp" id="edit-performer" value="${["חן","רחל"].includes(e.by)?"":e.by||""}" placeholder="👤 אחר — הכנס שם..."/>
+    </div>
+    <button class="save-btn" onclick="saveEditEntry()">שמור שינויים ✅</button>
+    <button class="del-btn" onclick="showDeleteConfirm()">🗑 מחק רשומה זו</button>
+    <div id="delete-confirm" style="display:none" class="confirm-del">
+      <div class="q">בטוח למחוק?</div>
+      <div class="confirm-row">
+        <button class="yes-btn" onclick="confirmDelete()">כן, מחק</button>
+        <button class="no-btn" onclick="document.getElementById('delete-confirm').style.display='none'">ביטול</button>
+      </div>
+    </div>`;
+}
+
+// Edit helpers
+function setEditVitVal(v){
+  document.querySelectorAll("[id^='sv-']").forEach(b=>b.style.background="rgba(168,216,249,.27)");
+  document.getElementById("sv-"+v).style.background="#A8D8F9";
+  currentEditEntry._editVitVal=v;
+}
+function setEditFeedType(t){
+  ["breast","bottle","pump"].forEach(x=>{
+    const btn=document.getElementById("et-"+x);
+    if(btn)btn.style.background=x===t?({breast:"#F9A8C9",bottle:"#FFCBA4",pump:"#A8F0E8"}[x]):({breast:"rgba(249,168,201,.44)",bottle:"rgba(255,203,164,.44)",pump:"rgba(168,240,232,.44)"}[x]);
+  });
+  document.getElementById("edit-breast-section").style.display=t==="breast"?"":"none";
+  document.getElementById("edit-ml-section").style.display=t!=="breast"?"":"none";
+  if(t!=="breast"){
+    document.getElementById("edit-ml-label").textContent=t==="pump"?"מ״ל שנשאב:":"מ״ל:";
+    const mlBtns=document.getElementById("edit-ml-btns");
+    const opts=t==="pump"?[30,40,50,60,70,80,90]:[60,70,80,90,100,120];
+    const c=t==="pump"?"#A8F0E8":"#FFCBA4";
+    mlBtns.innerHTML=opts.map(v=>`<button style="background:rgba(168,240,232,.3);border:2px solid ${c};border-radius:10px;padding:8px 14px;font-weight:800" onclick="setEditMl(${v})">${v}</button>`).join("");
+  }
+  currentEditEntry._editFeedType=t;
+}
+function setEditDuration(v){document.getElementById("edit-duration").value=v;}
+function setEditMl(v){document.getElementById("edit-ml").value=v;}
+function setEditDiaperType(t){
+  ["wet","dirty","both","dry"].forEach(x=>{const b=document.getElementById("dt-"+x);if(b)b.style.background=x===t?"#9EDFCC":"rgba(158,223,204,.2)";});
+  currentEditEntry._editDiaperType=t;
+}
+function setPerformer(n){
+  ["chen","rachel"].forEach(x=>document.getElementById("pf-"+x)?.classList.remove("active"));
+  if(n==="חן")document.getElementById("pf-chen")?.classList.add("active");
+  else if(n==="רחל")document.getElementById("pf-rachel")?.classList.add("active");
+  document.getElementById("edit-performer").value="";
+}
+function showDeleteConfirm(){document.getElementById("delete-confirm").style.display="";}
+function confirmDelete(){
+  if(!currentEditEntry)return;
+  DATA.entries=DATA.entries.filter(e=>e.id!==currentEditEntry.id);
+  currentEditEntry=null;closeSheet();saveData();renderAll();showToast("🗑 נמחק");
+}
+function saveEditEntry(){
+  if(!currentEditEntry)return;
+  const e=currentEditEntry;
+  const tInp=document.getElementById("edit-time").value;
+  const [h,m]=tInp.split(":").map(Number);
+  const nd=new Date(e.time);nd.setHours(h,m,0,0);
+  const performer=document.getElementById("edit-performer")?.value.trim()||e.by||"";
+  const actualPerformer=["חן","רחל"].includes(e.by)&&!document.getElementById("edit-performer")?.value.trim()?e.by:performer;
+
+  let updated={...e,time:nd.toISOString(),by:actualPerformer};
+  if(e.category==="vitamin"){updated.value=e._editVitVal||e.value;}
+  if(e.category==="feeding"){
+    const ft=e._editFeedType||e.type;
+    updated.type=ft;
+    if(ft==="breast"){updated.duration=parseInt(document.getElementById("edit-duration")?.value)||e.duration;delete updated.ml;}
+    else{updated.ml=parseInt(document.getElementById("edit-ml")?.value)||e.ml;delete updated.duration;}
+  }
+  if(e.category==="diaper"){updated.type=e._editDiaperType||e.type;}
+  DATA.entries=DATA.entries.map(x=>x.id===e.id?updated:x);
+  currentEditEntry=null;closeSheet();saveData();renderAll();showToast("✅ עודכן!");
+}
+
+function openEditModal(id){
+  openSheet("edit-entry",id);
+}
+
+function showCustomWho(){
+  document.getElementById("who-other-area").innerHTML=`
+    <div class="custom-name-box">
+      <div class="lbl">הכנס שם:</div>
+      <div class="inp-row">
+        <input class="inp" id="custom-who-name" placeholder="שם המבצע..." autofocus/>
+        <button style="background:#C5B4E8;border:none;border-radius:12px;padding:12px 18px;font-size:18px;font-weight:900" onclick="submitWhoCustom()">✅</button>
+      </div>
+    </div>`;
+  setTimeout(()=>document.getElementById("custom-who-name")?.focus(),100);
+}
+
+function closeSheet(){
+  document.getElementById("overlay").classList.remove("show");
+  document.getElementById("sheet").innerHTML="";
+  currentEditEntry=null;
+}
+function overlayClick(e){if(e.target===document.getElementById("overlay"))closeSheet();}
+
+// Medical forms
+function saveRecord(id){
+  const title=document.getElementById("rf-title").value.trim();
+  const date=document.getElementById("rf-date").value;
+  if(!title||!date)return;
+  const future=document.getElementById("rb-future")?.classList.contains("active");
+  const rec={id:id||Date.now().toString(),title,date,future,doctor:document.getElementById("rf-doctor").value,location:document.getElementById("rf-location").value,notes:document.getElementById("rf-notes").value};
+  if(id){DATA.medicalRecords=(DATA.medicalRecords||[]).map(r=>r.id===id?rec:r);}
+  else{if(!DATA.medicalRecords)DATA.medicalRecords=[];DATA.medicalRecords.unshift(rec);}
+  closeSheet();saveData();renderMedical();showToast("✅ נשמר!");
+}
+function deleteRecord(id){
+  DATA.medicalRecords=(DATA.medicalRecords||[]).filter(r=>r.id!==id);
+  saveData();renderMedical();showToast("🗑 נמחק");
+}
+function selectMedType(t){
+  document.querySelectorAll(".med-type-btn").forEach(b=>b.classList.remove("active"));
+  document.getElementById("mt-"+t)?.classList.add("active");
+  document.getElementById("mf-type").value=t;
+}
+function selectFreq(f,btn){
+  document.querySelectorAll(".freq-btn").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  document.getElementById("mf-freq").value=f;
+}
+function saveMed(id){
+  const name=document.getElementById("mf-name").value.trim();
+  if(!name)return;
+  const med={id:id||Date.now().toString(),name,medType:document.getElementById("mf-type").value,dose:document.getElementById("mf-dose").value,frequency:document.getElementById("mf-freq").value,note:document.getElementById("mf-note").value};
+  if(id){DATA.medicines=(DATA.medicines||[]).map(m=>m.id===id?med:m);}
+  else{if(!DATA.medicines)DATA.medicines=[];DATA.medicines.unshift(med);}
+  closeSheet();saveData();renderMedical();renderHome();showToast("✅ נשמר!");
+}
+function deleteMed(id){
+  DATA.medicines=(DATA.medicines||[]).filter(m=>m.id!==id);
+  saveData();renderMedical();renderHome();showToast("🗑 נמחק");
+}
+
+function switchMedTab(t){
+  medTab=t;
+  document.getElementById("medical-records-view").style.display=t==="records"?"":"none";
+  document.getElementById("medical-meds-view").style.display=t==="meds"?"":"none";
+  ["records","meds"].forEach(x=>{
+    const btn=document.getElementById("med-tab-"+x);
+    btn.classList.toggle("active",x===t);
+    btn.style.background=x===t?(x==="records"?"#A8F0E8":"#D4A8F9"):(x==="records"?"rgba(168,240,232,.1)":"rgba(212,168,249,.07)");
+  });
+}
+
+// ── NAV ───────────────────────────────────────────────────────────────────────
+function goTab(t){
+  currentTab=t;
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  document.getElementById("page-"+t).classList.add("active");
+  document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));
+  document.getElementById("nav-"+t).classList.add("active");
+}
+function setHistFilter(f){histFilter=f;renderHistory();}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg){
+  const t=document.getElementById("toast");
+  t.textContent=msg;t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove("show"),2200);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+window.addEventListener("fb-ready",loadData,{once:true});
+if(window._fbReady){loadData();}
+setInterval(()=>{if(window._load)loadData();},30000);
+setInterval(updateAlert,60000);
 </script>
 </body>
 </html>
