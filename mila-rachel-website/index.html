@@ -40,6 +40,19 @@ input,textarea{font-family:inherit;outline:none;}
 #alert-banner .alert-title{font-weight:900;color:#fff;font-size:15px;}
 #alert-banner .alert-sub{font-size:12px;color:rgba(255,255,255,.85);margin-top:2px;}
 
+/* FEEDING TIMER */
+#feeding-timer{margin:12px 16px 0;background:#fff;border-radius:20px;padding:14px 18px;display:none;align-items:center;gap:14px;box-shadow:0 2px 16px rgba(249,168,201,.25);border:2px solid #F9A8C9;}
+#feeding-timer.show{display:flex;}
+#feeding-timer .timer-clock{font-size:36px;}
+#feeding-timer .timer-info{flex:1;}
+#feeding-timer .timer-label{font-size:12px;color:#9B8AAD;font-weight:600;}
+#feeding-timer .timer-value{font-size:26px;font-weight:900;color:#3D2B4F;line-height:1.1;font-variant-numeric:tabular-nums;}
+#feeding-timer .timer-next{font-size:11px;color:#9B8AAD;margin-top:2px;}
+#feeding-timer .timer-bar-wrap{width:42px;display:flex;flex-direction:column;align-items:center;gap:4px;}
+#feeding-timer .timer-bar-bg{width:8px;height:60px;background:#f0e8ff;border-radius:8px;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;}
+#feeding-timer .timer-bar-fill{width:100%;background:linear-gradient(to top,#F9A8C9,#C5B4E8);border-radius:8px;transition:height .5s;}
+#feeding-timer .timer-pct{font-size:10px;font-weight:700;color:#9B8AAD;}
+
 /* PAGES */
 .page{padding:16px 16px 20px;display:none;}
 .page.active{display:block;}
@@ -195,6 +208,20 @@ textarea.inp{resize:vertical;}
   <div class="alert-text">
     <div class="alert-title" id="alert-title">🔔 זמן האכלה!</div>
     <div class="alert-sub" id="alert-sub"></div>
+  </div>
+</div>
+
+<!-- FEEDING TIMER -->
+<div id="feeding-timer">
+  <div class="timer-clock">⏱️</div>
+  <div class="timer-info">
+    <div class="timer-label">מאז האכלה אחרונה</div>
+    <div class="timer-value" id="timer-value">--:--</div>
+    <div class="timer-next" id="timer-next"></div>
+  </div>
+  <div class="timer-bar-wrap">
+    <div class="timer-bar-bg"><div class="timer-bar-fill" id="timer-bar" style="height:0%"></div></div>
+    <div class="timer-pct" id="timer-pct">0%</div>
   </div>
 </div>
 
@@ -620,12 +647,43 @@ function renderMedical(){
 function updateAlert(){
   const lastF=DATA.entries.find(e=>e.category==="feeding");
   const banner=document.getElementById("alert-banner");
-  if(!lastF){banner.className="";banner.style.display="none";return;}
+  const timer=document.getElementById("feeding-timer");
+
+  if(!lastF){
+    banner.className="";banner.style.display="none";
+    timer.className="";timer.style.display="none";
+    return;
+  }
+
   const mins=Math.floor((Date.now()-new Date(lastF.time))/60000);
   const hours=mins/60;
+  const totalMins=ALERT_HOURS*60;
+  const pct=Math.min(100,Math.round((mins/totalMins)*100));
+
+  // שעון חי
+  const h=Math.floor(mins/60), m=mins%60;
+  const timeStr=String(h).padStart(2,"0")+":"+String(m).padStart(2,"0");
+  document.getElementById("timer-value").textContent=timeStr;
+  document.getElementById("timer-bar").style.height=pct+"%";
+  document.getElementById("timer-pct").textContent=pct+"%";
+  document.getElementById("timer-bar").style.background=
+    hours>=4?"linear-gradient(to top,#FF6B6B,#FFB347)":
+    hours>=3?"linear-gradient(to top,#FFB347,#FFE99A)":
+    "linear-gradient(to top,#F9A8C9,#C5B4E8)";
+
+  const minsLeft=totalMins-mins;
+  if(minsLeft>0){
+    const hl=Math.floor(minsLeft/60),ml=minsLeft%60;
+    document.getElementById("timer-next").textContent=`עוד ${hl>0?hl+" ש' ":""}${ml} דק' להאכלה הבאה`;
+  } else {
+    document.getElementById("timer-next").textContent="⚠️ עבר הזמן!";
+  }
+  timer.className="show";timer.style.display="";
+
+  // באנר התראה
   if(hours<ALERT_HOURS){banner.className="";banner.style.display="none";return;}
-  const h=Math.floor(mins/60),m=mins%60;
-  const t=m===0?`${h} שעות`:`${h} ש' ${m} דק'`;
+  const hD=Math.floor(mins/60),mD=mins%60;
+  const t=mD===0?`${hD} שעות`:`${hD} ש' ${mD} דק'`;
   document.getElementById("alert-title").textContent=hours>=5?"⚠️ דחוף! מילה רחל רעבה!":"🔔 זמן האכלה!";
   document.getElementById("alert-sub").textContent=`עברו ${t} מהאכלה האחרונה • ${fmtTime(lastF.time)}`;
   banner.className="show "+(hours>=5?"urgent":"warn");
