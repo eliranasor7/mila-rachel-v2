@@ -591,6 +591,7 @@ function renderMedical(){
         </div>
       </div>
       ${r.notes?`<details style="margin-top:6px"><summary style="font-size:12px;color:#C5B4E8;font-weight:700;cursor:pointer">הצג הערות ▼</summary><div style="font-size:13px;color:#9B8AAD;margin-top:4px;line-height:1.5">${r.notes}</div></details>`:""}
+      ${r.photoData?`<details style="margin-top:6px"><summary style="font-size:12px;color:#A8D8F9;font-weight:700;cursor:pointer">📎 הצג תמונה / מרשם</summary><div style="margin-top:8px">${r.photoData.startsWith("data:image")?`<img src="${r.photoData}" style="max-width:100%;border-radius:10px;max-height:200px;object-fit:cover"/>`:""}<a href="${r.photoData}" download="${r.photoName||'file'}" style="display:inline-block;margin-top:6px;font-size:12px;color:#A8D8F9;font-weight:700;text-decoration:none">⬇️ הורד ${r.photoName||"קובץ"}</a></div></details>`:""}
     </div>`;
   }
 
@@ -757,17 +758,24 @@ function openSheet(type, id){
   }
   else if(type==="record-form"){
     const rec=id?DATA.medicalRecords.find(r=>r.id==id):null;
+    const isFut=rec?.future||false;
     sheet.innerHTML=`
       <div class="sheet-header"><span class="sheet-title">${rec?"עריכת בדיקה ✏️":"הוספת בדיקה 🩺"}</span><button class="sheet-close" onclick="closeSheet()">✕</button></div>
       <div style="display:flex;gap:10px;margin-bottom:14px">
-        <button id="rb-past" class="med-tab${!rec?.future?" active":""}" style="border-color:#C5B4E8;background:${!rec?.future?"#C5B4E8":"rgba(197,180,232,.1)"}" onclick="document.getElementById('rb-past').classList.add('active');document.getElementById('rb-future').classList.remove('active')">📁 בוצעה</button>
-        <button id="rb-future" class="med-tab${rec?.future?" active":""}" style="border-color:#A8F0E8;background:${rec?.future?"#A8F0E8":"rgba(168,240,232,.1)"}" onclick="document.getElementById('rb-future').classList.add('active');document.getElementById('rb-past').classList.remove('active')">🗓 עתידית</button>
+        <button id="rb-past" class="med-tab" style="flex:1;border-color:#C5B4E8;background:${!isFut?"#C5B4E8":"rgba(197,180,232,.1)"}" onclick="selectRecordType(false)">📁 בוצעה</button>
+        <button id="rb-future" class="med-tab" style="flex:1;border-color:#A8F0E8;background:${isFut?"#A8F0E8":"rgba(168,240,232,.1)"}" onclick="selectRecordType(true)">🗓 עתידית</button>
       </div>
+      <input type="hidden" id="rf-future" value="${isFut?"true":"false"}"/>
       <div class="lbl">שם הבדיקה:</div><input class="inp" id="rf-title" value="${rec?.title||""}" placeholder="ביקור שגרתי, בדיקת דם..." style="margin-bottom:12px"/>
       <div class="lbl">תאריך:</div><input class="inp" type="date" id="rf-date" value="${rec?.date||""}" style="margin-bottom:12px;direction:ltr"/>
       <div class="lbl">רופא:</div><input class="inp" id="rf-doctor" value="${rec?.doctor||""}" placeholder="שם הרופא..." style="margin-bottom:12px"/>
       <div class="lbl">מיקום:</div><input class="inp" id="rf-location" value="${rec?.location||""}" placeholder="בית חולים..." style="margin-bottom:12px"/>
-      <div class="lbl">ממצאים / הערות / מרשם:</div><textarea class="inp" id="rf-notes" rows="4" placeholder="פרטים, תוצאות..." style="margin-bottom:16px">${rec?.notes||""}</textarea>
+      <div class="lbl">ממצאים / הערות / מרשם:</div><textarea class="inp" id="rf-notes" rows="3" placeholder="פרטים, תוצאות..." style="margin-bottom:12px">${rec?.notes||""}</textarea>
+      <div class="lbl">📎 צילום / מרשם (עד 3MB):</div>
+      <input type="file" id="rf-photo" accept="image/*,.pdf" style="margin-bottom:6px;font-size:13px;width:100%" onchange="previewPhoto()"/>
+      <div id="rf-photo-preview" style="margin-bottom:12px">
+        ${rec?.photoData?`<div style="margin-top:6px"><img src="${rec.photoData}" style="max-width:100%;border-radius:10px;max-height:180px;object-fit:cover"/><div style="font-size:11px;color:#9B8AAD;margin-top:4px">📎 ${rec.photoName||"קובץ קיים"}</div></div>`:""}
+      </div>
       <button class="save-btn" style="background:linear-gradient(135deg,#A8F0E8,#9EDFCC);color:#3D2B4F" onclick="saveRecord('${rec?.id||""}')">שמור בדיקה ✅</button>`;
   }
   else if(type==="med-form"){
@@ -939,6 +947,24 @@ function showCustomWho(){
   setTimeout(()=>document.getElementById("custom-who-name")?.focus(),100);
 }
 
+function selectRecordType(future){
+  document.getElementById("rf-future").value=future?"true":"false";
+  document.getElementById("rb-past").style.background=future?"rgba(197,180,232,.1)":"#C5B4E8";
+  document.getElementById("rb-future").style.background=future?"#A8F0E8":"rgba(168,240,232,.1)";
+}
+function previewPhoto(){
+  const file=document.getElementById("rf-photo").files[0];
+  if(!file)return;
+  if(file.size>3*1024*1024){alert("הקובץ גדול מדי (מקסימום 3MB)");return;}
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const isImg=file.type.startsWith("image/");
+    document.getElementById("rf-photo-preview").innerHTML=isImg
+      ?`<img src="${e.target.result}" style="max-width:100%;border-radius:10px;max-height:180px;object-fit:cover;margin-top:6px"/><div style="font-size:11px;color:#9B8AAD;margin-top:4px">📎 ${file.name}</div>`
+      :`<div style="font-size:13px;color:#9B8AAD;margin-top:6px">📎 ${file.name}</div>`;
+  };
+  reader.readAsDataURL(file);
+}
 function closeSheet(){
   document.getElementById("overlay").classList.remove("show");
   document.getElementById("sheet").innerHTML="";
@@ -951,11 +977,29 @@ function saveRecord(id){
   const title=document.getElementById("rf-title").value.trim();
   const date=document.getElementById("rf-date").value;
   if(!title||!date)return;
-  const future=document.getElementById("rb-future")?.classList.contains("active");
-  const rec={id:id||Date.now().toString(),title,date,future,doctor:document.getElementById("rf-doctor").value,location:document.getElementById("rf-location").value,notes:document.getElementById("rf-notes").value};
-  if(id){DATA.medicalRecords=(DATA.medicalRecords||[]).map(r=>r.id===id?rec:r);}
-  else{if(!DATA.medicalRecords)DATA.medicalRecords=[];DATA.medicalRecords.unshift(rec);}
-  closeSheet();saveData();renderMedical();showToast("✅ נשמר!");
+  const future=document.getElementById("rf-future").value==="true";
+  const existingRec=id?DATA.medicalRecords.find(r=>r.id===id):null;
+  const photoFile=document.getElementById("rf-photo")?.files[0];
+  function doSave(photoData,photoName){
+    const rec={
+      id:id||Date.now().toString(),title,date,future,
+      doctor:document.getElementById("rf-doctor").value,
+      location:document.getElementById("rf-location").value,
+      notes:document.getElementById("rf-notes").value,
+      photoData:photoData||(existingRec?.photoData||null),
+      photoName:photoName||(existingRec?.photoName||null)
+    };
+    if(id){DATA.medicalRecords=(DATA.medicalRecords||[]).map(r=>r.id===id?rec:r);}
+    else{if(!DATA.medicalRecords)DATA.medicalRecords=[];DATA.medicalRecords.unshift(rec);}
+    closeSheet();saveData();renderMedical();showToast("✅ נשמר!");
+  }
+  if(photoFile){
+    const reader=new FileReader();
+    reader.onload=e=>doSave(e.target.result,photoFile.name);
+    reader.readAsDataURL(photoFile);
+  } else {
+    doSave(null,null);
+  }
 }
 function deleteRecord(id){
   DATA.medicalRecords=(DATA.medicalRecords||[]).filter(r=>r.id!==id);
