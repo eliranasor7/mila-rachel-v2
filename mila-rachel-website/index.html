@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>מילה רחל 🌸</title>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-title" content="מילה רחל"/>
+  <meta name="theme-color" content="#F9A8C9"/>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+    body{background:#FFF8F5;font-family:'Segoe UI','Arial Hebrew',Arial,sans-serif;}
+    #root{max-width:480px;margin:0 auto;min-height:100vh;}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.82}}
+    @keyframes slideUp{from{transform:translateY(60px);opacity:0}to{transform:translateY(0);opacity:1}}
+  </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDuB5kM88GDkSneYqEUrIt5PB_4onuqGzM",
+  authDomain: "mila-rachel.firebaseapp.com",
+  databaseURL: "https://mila-rachel-default-rtdb.firebaseio.com",
+  projectId: "mila-rachel",
+  storageBucket: "mila-rachel.firebasestorage.app",
+  messagingSenderId: "975318103287",
+  appId: "1:975318103287:web:db4883c104bf7494290ff2"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const DB_REF = "mila_family_data";
+
+window._fbLoad = async function(){
+  try{
+    const snap = await get(ref(db, DB_REF));
+    if(snap.exists()){
+      const d = snap.val();
+      if(d && Array.isArray(d.entries)) return d;
+    }
+  }catch(e){console.error("FB load",e);}
+  return {entries:[],vitamins:{},medicalRecords:[],medicines:[]};
+};
+
+window._fbSave = async function(data){
+  try{ await set(ref(db, DB_REF), data); return true; }
+  catch(e){ console.error("FB save",e); return false; }
+};
+
+window._fbReady = true;
+window.dispatchEvent(new Event("fb-ready"));
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+
+<script type="text/babel" data-presets="react">
+const {useState, useEffect, useRef} = React;
+const ALERT_HOURS = 4;
+
+
+const CLOUD_KEY = "mila_rachel_2024_family";
+
+// 👇 כדי להוסיף תמונה: העלה את התמונה ל-https://imgbb.com
+// ולאחר מכן החלף את הכתובת כאן:
+const MILA_PHOTO_URL = "https://i.ibb.co/placeholder/mila.jpg";
+
+const C = {
+  bg:"#FFF8F5", pink:"#F9A8C9", lavender:"#C5B4E8", mint:"#9EDFCC",
+  peach:"#FFCBA4", yellow:"#FFE99A", blue:"#A8D8F9", purple:"#D4A8F9",
+  teal:"#A8F0E8", orange:"#FFB347",
+  text:"#3D2B4F", soft:"#9B8AAD", white:"#FFFFFF",
+  shadow:"rgba(61,43,79,0.10)", red:"#FF6B6B",
+};
+
+function nowIso(){return new Date().toISOString();}
+function todayStr(){return new Date().toISOString().slice(0,10);}
+function timeAgo(iso){
+  const diff=Math.floor((Date.now()-new Date(iso))/60000);
+  if(diff<1)return "עכשיו";
+  if(diff<60)return `לפני ${diff} דק'`;
+  const h=Math.floor(diff/60),m=diff%60;
+  return m===0?`לפני ${h} ש'`:`לפני ${h} ש' ${m} דק'`;
+}
+function formatTime(iso){return new Date(iso).toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"});}
+function formatFullDate(iso){return new Date(iso).toLocaleDateString("he-IL",{day:"numeric",month:"long",year:"numeric"});}
+function toTimeInput(iso){const d=new Date(iso);return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");}
+function applyTimeToIso(orig,t){const [h,m]=t.split(":").map(Number),d=new Date(orig);d.setHours(h,m,0,0);return d.toISOString();}
+function formatDateLabel(ds){
+  if(ds===todayStr())return "היום";
+  const y=new Date();y.setDate(y.getDate()-1);
+  if(ds===y.toISOString().slice(0,10))return "אתמול";
+  return new Date(ds+"T12:00:00").toLocaleDateString("he-IL",{weekday:"long",day:"numeric",month:"long"});
+}
+
+async function cloudLoad(){
+  if(!window._fbLoad) return {entries:[],vitamins:{},medicalRecords:[],medicines:[]};
+  try{return await window._fbLoad();}catch(e){return {entries:[],vitamins:{},medicalRecords:[],medicines:[]};}
+}
+async function cloudSave(data){
+  if(!window._fbSave) return false;
+  try{return await window._fbSave(data);}catch(e){return false;}
+}
+
+function entryInfo(entry){
+  if(entry.category==="vitamin"){
+    const s=entry.key==="simecol";
+    return{isF:false,isVit:true,isDrug:false,color:s?C.blue:entry.key==="vitD"?C.yellow:C.peach,emoji:s?"🔵":entry.key==="vitD"?"☀️":"🩸",label:s?"סימיקול":entry.key==="vitD"?"ויטמין D":"ברזל",sub:s&&entry.value?`${entry.value} מ״ל`:"ניתן"};
+  }
+  if(entry.category==="medicine"){
+    const e=entry.medType==="משחה"?"🧴":entry.medType==="טיפות"?"💧":"💊";
+    return{isF:false,isVit:false,isDrug:true,color:C.purple,emoji:e,label:entry.name||"תרופה",sub:[entry.medType,entry.dose,entry.note].filter(Boolean).join(" · ")};
+  }
+  const isF=entry.category==="feeding";
+  return{isF,isVit:false,isDrug:false,color:isF?C.pink:entry.type==="pump"?C.teal:C.mint,
+    emoji:isF?(entry.type==="breast"?"🤱":entry.type==="pump"?"🫙":"🍼"):(entry.type==="wet"?"💧":entry.type==="dirty"?"💩":entry.type==="both"?"💧💩":"✨"),
+    label:isF?(entry.type==="breast"?"האכלת שד":entry.type==="pump"?"שאיבה 🫙":"האכלת בקבוק"):"חיתול",
+    sub:isF?(entry.type==="breast"?(entry.duration?`${entry.duration} דקות`:""):(entry.ml?`${entry.ml} מ״ל`:"")):(entry.type==="wet"?"רטוב":entry.type==="dirty"?"מלוכלך":entry.type==="both"?"שניהם":"יבש")};
+}
+
+function App(){
+  const [data,setData]=useState(null);
+  const [tab,setTab]=useState("home");
+  const [modal,setModal]=useState(null);
+  const [editEntry,setEditEntry]=useState(null);
+  const [toast,setToast]=useState(null);
+  const [syncing,setSyncing]=useState(false);
+  const [saveStatus,setSaveStatus]=useState(null);
+  const [pendingEntry,setPendingEntry]=useState(null);
+  const [photoLoaded,setPhotoLoaded]=useState(false);
+  const saveTimer=useRef(null);
+
+  useEffect(()=>{
+    cloudLoad().then(d=>setData({medicalRecords:[],medicines:[],...d}));
+    const iv=setInterval(()=>cloudLoad().then(d=>setData({medicalRecords:[],medicines:[],...d})),30000);
+    return ()=>clearInterval(iv);
+  },[]);
+
+  function persist(nd){
+    setSaveStatus("saving");
+    cloudSave(nd).then(ok=>{setSaveStatus(ok?"saved":"error");clearTimeout(saveTimer.current);saveTimer.current=setTimeout(()=>setSaveStatus(null),ok?2000:5000);});
+  }
+  function updateData(fn){setData(prev=>{const u=fn(prev);persist(u);return u;});}
+  function submitWithPerformer(p){
+    if(!pendingEntry)return;
+    updateData(prev=>({...prev,entries:[{...pendingEntry,id:Date.now(),time:nowIso(),by:p},...prev.entries]}));
+    setPendingEntry(null);setModal(null);showToast(`✅ נרשם על ידי ${p}!`);
+  }
+  function requestPerformer(entry){setPendingEntry(entry);setModal("who");}
+  function giveVitamin(key,value,performer){
+    updateData(prev=>{
+      const today=todayStr(),dv=prev.vitamins[today]||{};
+      return{...prev,vitamins:{...prev.vitamins,[today]:{...dv,[key]:value}},
+        entries:value?[{id:Date.now(),time:nowIso(),category:"vitamin",key,value,by:performer||""},...prev.entries]:prev.entries};
+    });showToast("✅ עודכן!");
+  }
+  function toggleVitamin(key,value){const t=todayStr();updateData(prev=>({...prev,vitamins:{...prev.vitamins,[t]:{...(prev.vitamins[t]||{}),[key]:value}}}));showToast("✅ עודכן!");}
+  function deleteEntry(id){updateData(prev=>({...prev,entries:prev.entries.filter(e=>e.id!==id)}));setEditEntry(null);showToast("🗑 נמחק");}
+  function saveEdit(u){updateData(prev=>({...prev,entries:prev.entries.map(e=>e.id===u.id?u:e)}));setEditEntry(null);showToast("✅ עודכן!");}
+  function saveMedicalRecord(rec){
+    updateData(prev=>{const rs=prev.medicalRecords||[];return rec.id?{...prev,medicalRecords:rs.map(r=>r.id===rec.id?rec:r)}:{...prev,medicalRecords:[{...rec,id:Date.now()},...rs]};});showToast("✅ נשמר!");
+  }
+  function deleteMedicalRecord(id){updateData(prev=>({...prev,medicalRecords:(prev.medicalRecords||[]).filter(r=>r.id!==id)}));showToast("🗑 נמחק");}
+  function saveMedicine(med){
+    updateData(prev=>{const ms=prev.medicines||[];return med.id?{...prev,medicines:ms.map(m=>m.id===med.id?med:m)}:{...prev,medicines:[{...med,id:Date.now()},...ms]};});showToast("✅ נשמר!");
+  }
+  function deleteMedicine(id){updateData(prev=>({...prev,medicines:(prev.medicines||[]).filter(m=>m.id!==id)}));showToast("🗑 נמחק");}
+  function giveMedicine(med,performer){
+    updateData(prev=>({...prev,entries:[{id:Date.now(),time:nowIso(),category:"medicine",name:med.name,medType:med.medType,dose:med.dose,note:med.note,by:performer},...prev.entries]}));
+    showToast(`✅ ${med.name} נרשם!`);
+  }
+  function showToast(msg){setToast(msg);setTimeout(()=>setToast(null),2200);}
+
+  // מסך טעינה
+  if(!data) return(
+    <div dir="rtl" style={{minHeight:"100vh",position:"relative",overflow:"hidden",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:"'Segoe UI','Arial Hebrew',sans-serif"}}>
+      <div style={{position:"absolute",inset:0,background:`linear-gradient(135deg, ${C.pink}, ${C.lavender}, ${C.mint})`,zIndex:0}}/>
+      {photoLoaded&&<div style={{position:"absolute",inset:0,backgroundImage:`url(${MILA_PHOTO_URL})`,backgroundSize:"cover",backgroundPosition:"center top",filter:"blur(3px) brightness(0.5)",zIndex:1}}/>}
+      <img src={MILA_PHOTO_URL} onLoad={()=>setPhotoLoaded(true)} alt="" style={{display:"none"}}/>
+      <div style={{position:"relative",zIndex:2,display:"flex",flexDirection:"column",alignItems:"center",padding:24}}>
+        <div style={{width:170,height:170,borderRadius:"50%",border:"5px solid white",boxShadow:"0 8px 32px rgba(0,0,0,0.4)",marginBottom:20,overflow:"hidden",background:`linear-gradient(135deg,${C.pink},${C.lavender})`}}>
+          <img src={MILA_PHOTO_URL} alt="מילה רחל" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top"}}/>
+        </div>
+        <div style={{fontSize:32,fontWeight:900,color:"white",textShadow:"0 2px 12px rgba(0,0,0,0.6)"}}>🌸 מילה רחל</div>
+        <div style={{fontSize:15,color:"rgba(255,255,255,0.9)",marginTop:8,fontWeight:600}}>יומן תינוקת משפחתי</div>
+        <div style={{fontSize:13,color:"rgba(255,255,255,0.7)",marginTop:4}}>טוען נתונים...</div>
+        <div style={{marginTop:20,width:32,height:32,border:"4px solid rgba(255,255,255,0.3)",borderTop:"4px solid white",borderRadius:"50%",animation:"spin 0.9s linear infinite"}}/>
+      </div>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+    </div>
+  );
+
+  const today=todayStr();
+  const todayEntries=data.entries.filter(e=>e.time.slice(0,10)===today);
+  const todayVits=data.vitamins[today]||{};
+  const lastFeeding=data.entries.find(e=>e.category==="feeding")||null;
+  const lastDiaper=data.entries.find(e=>e.category==="diaper")||null;
+
+  return(
+    <div dir="rtl" style={{minHeight:"100vh",background:C.bg,fontFamily:"'Segoe UI','Arial Hebrew',sans-serif",maxWidth:480,margin:"0 auto",paddingBottom:85}}>
+      {/* כותרת עם תמונה */}
+      <div style={{background:`linear-gradient(135deg,${C.pink},${C.lavender})`,borderRadius:"0 0 32px 32px",boxShadow:`0 4px 20px ${C.shadow}`,position:"relative",overflow:"hidden"}}>
+        <div style={{width:"100%",height:130,position:"relative",overflow:"hidden"}}>
+          <div style={{position:"absolute",inset:0,background:`linear-gradient(135deg,${C.pink},${C.lavender})`}}/>
+          <img src={MILA_PHOTO_URL} alt="" onError={e=>e.target.style.display="none"} style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 20%",display:"block",filter:"brightness(0.65)"}}/>
+        </div>
+        <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+          <div style={{fontSize:26,fontWeight:900,color:"white",textShadow:"0 2px 8px rgba(0,0,0,0.6)"}}>🌸 מילה רחל</div>
+          <div style={{fontSize:11,color:"rgba(255,255,255,0.9)",marginTop:3}}>{saveStatus==="saving"?"💾 שומר...":saveStatus==="saved"?"✅ נשמר":saveStatus==="error"?"⚠️ שגיאת שמירה":"👨‍👩‍👧 יומן משפחתי"}</div>
+        </div>
+        <button onClick={()=>{setSyncing(true);cloudLoad().then(d=>{setData(d);setSyncing(false);showToast("🔄 עודכן!");});}} style={{position:"absolute",left:14,top:12,background:"rgba(255,255,255,0.25)",border:"none",borderRadius:10,padding:"6px 10px",cursor:"pointer",fontSize:16}}>{syncing?"⏳":"🔄"}</button>
+      </div>
+
+      {tab==="home"&&<HomeTab todayEntries={todayEntries} todayVits={todayVits} lastFeeding={lastFeeding} lastDiaper={lastDiaper} onModal={setModal} onGiveVit={giveVitamin} onEdit={setEditEntry} medicines={data.medicines||[]} onRequestPerformer={requestPerformer}/>}
+      {tab==="history"&&<HistoryTab entries={data.entries} onEdit={setEditEntry}/>}
+      {tab==="vitamins"&&<VitaminsTab vitamins={data.vitamins} todayVits={todayVits} onGive={giveVitamin} onToggle={toggleVitamin}/>}
+      {tab==="medical"&&<MedicalTab records={data.medicalRecords||[]} medicines={data.medicines||[]} onSaveRecord={saveMedicalRecord} onDeleteRecord={deleteMedicalRecord} onSaveMed={saveMedicine} onDeleteMed={deleteMedicine}/>}
+
+      <nav style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:480,background:C.white,borderTop:`2px solid ${C.pink}`,display:"flex",justifyContent:"space-around",padding:"8px 0 14px",zIndex:100,boxShadow:"0 -4px 20px rgba(0,0,0,0.07)"}}>
+        {[{k:"home",e:"🏠",l:"בית"},{k:"history",e:"📋",l:"היסטוריה"},{k:"vitamins",e:"💊",l:"ויטמינים"},{k:"medical",e:"🏥",l:"רפואי"}].map(t=>(
+          <button key={t.k} onClick={()=>setTab(t.k)} style={{background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:1,opacity:tab===t.k?1:0.4,transform:tab===t.k?"scale(1.1)":"scale(1)",transition:"all 0.2s"}}>
+            <span style={{fontSize:22}}>{t.e}</span>
+            <span style={{fontSize:10,fontWeight:700,color:C.text}}>{t.l}</span>
+          </button>
+        ))}
+      </nav>
+
+      {modal==="feeding_type"&&<Sheet title="איך האכלה? 🍼" onClose={()=>setModal(null)}><div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12,marginTop:8}}><BigBtn emoji="🤱" label="שד" color={C.pink} onClick={()=>setModal("feeding_breast")}/><BigBtn emoji="🍼" label="בקבוק" color={C.peach} onClick={()=>setModal("feeding_bottle")}/><BigBtn emoji="🫙" label="שאיבה" color={C.teal} onClick={()=>setModal("feeding_pump")}/></div></Sheet>}
+      {modal==="feeding_breast"&&<Sheet title="האכלת שד 🤱" onClose={()=>setModal(null)}><Lbl>כמה דקות ינקה?</Lbl><QuickPicker options={[5,10,15,20,25,30]} color={C.pink} unit="דק'" placeholder="הכנס דקות..." onSelect={v=>requestPerformer({category:"feeding",type:"breast",duration:v})}/></Sheet>}
+      {modal==="feeding_bottle"&&<Sheet title="האכלת בקבוק 🍼" onClose={()=>setModal(null)}><Lbl>כמה מ״ל שתתה?</Lbl><QuickPicker options={[60,70,80,90,100,120]} color={C.peach} unit='מ"ל' placeholder='כמות אחרת...' onSelect={v=>requestPerformer({category:"feeding",type:"bottle",ml:v})}/></Sheet>}
+      {modal==="feeding_pump"&&<Sheet title="שאיבה 🫙" onClose={()=>setModal(null)}><Lbl>כמה מ״ל נשאב?</Lbl><QuickPicker options={[30,40,50,60,70,80,90]} color={C.teal} unit='מ"ל' placeholder='כמות אחרת...' onSelect={v=>requestPerformer({category:"feeding",type:"pump",ml:v})}/></Sheet>}
+      {modal==="diaper"&&<Sheet title="חיתול 👶" onClose={()=>setModal(null)}><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:8}}>{[{v:"wet",e:"💧",l:"רטוב"},{v:"dirty",e:"💩",l:"מלוכלך"},{v:"both",e:"💧💩",l:"שניהם"},{v:"dry",e:"✨",l:"יבש"}].map(o=><BigBtn key={o.v} emoji={o.e} label={o.l} color={C.mint} onClick={()=>requestPerformer({category:"diaper",type:o.v})}/>)}</div></Sheet>}
+      {modal==="simecol"&&<Sheet title="סימיקול 🔵" onClose={()=>setModal(null)}><Lbl>כמה מ״ל?</Lbl><div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:16}}>{[0.2,0.3,0.4].map(v=><button key={v} onClick={()=>requestPerformer({category:"vitamin",key:"simecol",value:v,_isVit:true})} style={{background:C.blue+"44",border:`2.5px solid ${C.blue}`,borderRadius:16,padding:"18px 6px",cursor:"pointer",fontFamily:"inherit"}}><div style={{fontSize:24,fontWeight:900,color:C.text}}>{v}</div><div style={{fontSize:12,color:C.soft,marginTop:3}}>מ״ל</div></button>)}</div><CustomInput color={C.blue} placeholder="כמות אחרת..." step="0.1" onSelect={v=>requestPerformer({category:"vitamin",key:"simecol",value:v,_isVit:true})}/></Sheet>}
+
+      {modal==="who"&&pendingEntry&&(
+        <WhoModal
+          pendingEntry={pendingEntry}
+          onDone={(name)=>{
+            if(pendingEntry._isVit){giveVitamin(pendingEntry.key,pendingEntry.value,name);setPendingEntry(null);setModal(null);}
+            else if(pendingEntry._isMed){giveMedicine(pendingEntry._med,name);setPendingEntry(null);setModal(null);}
+            else submitWithPerformer(name);
+          }}
+          onClose={()=>{setModal(null);setPendingEntry(null);}}
+        />
+      )}
+      {editEntry&&<EditModal entry={editEntry} onSave={saveEdit} onDelete={deleteEntry} onClose={()=>setEditEntry(null)}/>}
+      {toast&&<div style={{position:"fixed",bottom:95,left:"50%",transform:"translateX(-50%)",background:C.text,color:C.white,borderRadius:20,padding:"10px 26px",fontSize:15,fontWeight:700,zIndex:999,whiteSpace:"nowrap",boxShadow:"0 4px 20px rgba(0,0,0,0.2)"}}>{toast}</div>}
+    </div>
+  );
+}
+
+function HomeTab({todayEntries,todayVits,lastFeeding,lastDiaper,onModal,onGiveVit,onEdit,medicines,onRequestPerformer}){
+  const feedings=todayEntries.filter(e=>e.category==="feeding");
+  const diapers=todayEntries.filter(e=>e.category==="diaper");
+  const vitCount=[todayVits.vitD,todayVits.iron,todayVits.simecol].filter(Boolean).length;
+  return(
+    <div style={{padding:"20px 16px"}}>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8,marginBottom:22}}>
+        <StatCard emoji="🍼" val={feedings.length} label="האכלות" color={C.pink}/>
+        <StatCard emoji="👶" val={diapers.length} label="חיתולים" color={C.mint}/>
+        <StatCard emoji="💊" val={`${vitCount}/3`} label="ויטמינים" color={C.lavender}/>
+        <StatCard emoji="🔵" val={todayVits.simecol||"—"} label="סימיקול" color={C.blue}/>
+      </div>
+      <Section title="אחרון שנרשם 🕐">
+        <EntryRow entry={lastFeeding} fallback="עוד לא נרשמה האכלה" onEdit={onEdit} showAgo/>
+        <EntryRow entry={lastDiaper} fallback="עוד לא נרשם חיתול" onEdit={onEdit} showAgo/>
+      </Section>
+      <Section title="הוספה מהירה ✏️">
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+          <ActionBtn emoji="🍼" label="האכלה" color={C.pink} onClick={()=>onModal("feeding_type")}/>
+          <ActionBtn emoji="👶" label="חיתול" color={C.mint} onClick={()=>onModal("diaper")}/>
+        </div>
+      </Section>
+      <Section title="ויטמינים היום 💊">
+        <div style={{display:"flex",gap:10}}>
+          <VitBtn emoji="☀️" label="ויטמין D" done={!!todayVits.vitD} color={C.yellow} onClick={()=>onGiveVit("vitD",true)}/>
+          <VitBtn emoji="🩸" label="ברזל" done={!!todayVits.iron} color={C.peach} onClick={()=>onGiveVit("iron",true)}/>
+          <VitBtn emoji="🔵" label="סימיקול" done={!!todayVits.simecol} sub={todayVits.simecol?`${todayVits.simecol} מ״ל`:null} color={C.blue} onClick={()=>onModal("simecol")}/>
+        </div>
+      </Section>
+      {medicines.length>0&&(
+        <Section title="תרופות קבועות 🧴">
+          {medicines.map(med=>(
+            <div key={med.id} style={{display:"flex",alignItems:"center",background:C.purple+"22",border:`1.5px solid ${C.purple}`,borderRadius:14,padding:"10px 14px",gap:10,marginBottom:8}}>
+              <span style={{fontSize:22}}>{med.medType==="משחה"?"🧴":med.medType==="טיפות"?"💧":"💊"}</span>
+              <div style={{flex:1}}><div style={{fontWeight:800,color:C.text,fontSize:14}}>{med.name}</div>{med.dose&&<div style={{fontSize:12,color:C.soft}}>{med.dose}</div>}</div>
+              <button onClick={()=>onRequestPerformer({_isMed:true,_med:med})} style={{background:C.purple,border:"none",borderRadius:10,padding:"8px 14px",cursor:"pointer",fontWeight:800,fontSize:13,color:C.white,fontFamily:"inherit"}}>ניתן ✅</button>
+            </div>
+          ))}
+        </Section>
+      )}
+    </div>
+  );
+}
+
+function HistoryTab({entries,onEdit}){
+  const [filter,setFilter]=useState("all");
+  const filtered=filter==="all"?entries:filter==="vitamin"?entries.filter(e=>e.category==="vitamin"):filter==="medicine"?entries.filter(e=>e.category==="medicine"):entries.filter(e=>e.category===filter);
+  const grouped={};
+  filtered.forEach(e=>{const d=e.time.slice(0,10);if(!grouped[d])grouped[d]=[];grouped[d].push(e);});
+  const dates=Object.keys(grouped).sort((a,b)=>b.localeCompare(a));
+  return(
+    <div style={{padding:"20px 16px"}}>
+      <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap"}}>
+        {[{v:"all",l:"הכל"},{v:"feeding",l:"🍼 האכלות"},{v:"diaper",l:"👶 חיתולים"},{v:"vitamin",l:"💊 ויטמינים"},{v:"medicine",l:"🧴 תרופות"}].map(f=>(
+          <button key={f.v} onClick={()=>setFilter(f.v)} style={chip(filter===f.v,C.lavender)}>{f.l}</button>
+        ))}
+      </div>
+      {dates.length===0&&<Empty text="אין רשומות עדיין 🌱"/>}
+      {dates.map(d=>(
+        <div key={d} style={{marginBottom:18}}>
+          <div style={{fontSize:13,fontWeight:700,color:C.soft,marginBottom:8}}>{formatDateLabel(d)}</div>
+          {grouped[d].sort((a,b)=>b.time.localeCompare(a.time)).map(e=><EntryRow key={e.id} entry={e} onEdit={onEdit}/>)}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function VitaminsTab({vitamins,todayVits,onGive,onToggle}){
+  const [showSim,setShowSim]=useState(false);
+  const dates=Object.keys(vitamins).sort((a,b)=>b.localeCompare(a)).slice(0,14);
+  return(
+    <div style={{padding:"20px 16px"}}>
+      <Section title="היום — ניתן לתת מספר פעמים">
+        <div style={{display:"flex",gap:10,marginBottom:12}}>
+          <VitBtn emoji="☀️" label="ויטמין D" done={!!todayVits.vitD} color={C.yellow} onClick={()=>onGive("vitD",true)}/>
+          <VitBtn emoji="🩸" label="ברזל" done={!!todayVits.iron} color={C.peach} onClick={()=>onGive("iron",true)}/>
+          <VitBtn emoji="🔵" label="סימיקול" done={!!todayVits.simecol} sub={todayVits.simecol?`${todayVits.simecol} מ״ל`:null} color={C.blue} onClick={()=>setShowSim(s=>!s)}/>
+        </div>
+        {showSim&&(
+          <div style={{background:C.blue+"22",border:`2px solid ${C.blue}`,borderRadius:18,padding:"16px 14px"}}>
+            <Lbl>בחרו כמות סימיקול:</Lbl>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:12}}>
+              {[0.2,0.3,0.4].map(v=><button key={v} onClick={()=>{onGive("simecol",v);setShowSim(false);}} style={{background:todayVits.simecol===v?C.blue:C.blue+"44",border:`2.5px solid ${C.blue}`,borderRadius:14,padding:"14px 6px",cursor:"pointer",fontFamily:"inherit"}}><div style={{fontSize:22,fontWeight:900,color:C.text}}>{v}</div><div style={{fontSize:11,color:C.soft,marginTop:2}}>מ״ל</div></button>)}
+            </div>
+            <CustomInput color={C.blue} placeholder="כמות אחרת..." step="0.1" onSelect={v=>{onGive("simecol",v);setShowSim(false);}}/>
+            {todayVits.simecol&&<button onClick={()=>{onToggle("simecol",false);setShowSim(false);}} style={{width:"100%",marginTop:10,padding:"10px",borderRadius:12,background:"#fee",border:`1.5px solid ${C.red}`,cursor:"pointer",fontSize:13,fontWeight:700,color:C.red,fontFamily:"inherit"}}>🗑 בטל סימיקול היום</button>}
+          </div>
+        )}
+      </Section>
+      <Section title="14 ימים אחרונים">
+        {dates.length===0&&<Empty text="אין נתונים עדיין"/>}
+        {dates.map(d=>{const v=vitamins[d]||{};return(
+          <div key={d} style={{display:"flex",alignItems:"center",justifyContent:"space-between",background:C.white,borderRadius:14,padding:"12px 16px",marginBottom:8,boxShadow:`0 2px 10px ${C.shadow}`}}>
+            <span style={{fontSize:13,fontWeight:700,color:C.soft}}>{formatDateLabel(d)}</span>
+            <div style={{display:"flex",gap:12,alignItems:"center"}}>
+              <span style={{fontSize:20,opacity:v.vitD?1:0.18}}>☀️</span>
+              <span style={{fontSize:20,opacity:v.iron?1:0.18}}>🩸</span>
+              <div style={{display:"flex",flexDirection:"column",alignItems:"center",opacity:v.simecol?1:0.18}}>
+                <span style={{fontSize:18}}>🔵</span>
+                {v.simecol&&<span style={{fontSize:10,fontWeight:700,color:C.soft}}>{v.simecol} מ״ל</span>}
+              </div>
+            </div>
+          </div>
+        );})}
+      </Section>
+    </div>
+  );
+}
+
+function MedicalTab({records,medicines,onSaveRecord,onDeleteRecord,onSaveMed,onDeleteMed}){
+  const [subTab,setSubTab]=useState("records");
+  const [showRecordForm,setShowRecordForm]=useState(false);
+  const [editRecord,setEditRecord]=useState(null);
+  const [showMedForm,setShowMedForm]=useState(false);
+  const [editMed,setEditMed]=useState(null);
+  const sorted=[...records].sort((a,b)=>(b.date||"").localeCompare(a.date||""));
+  const past=sorted.filter(r=>!r.future&&(r.date||"")<=todayStr());
+  const future=sorted.filter(r=>r.future||(r.date||"")>todayStr()).sort((a,b)=>(a.date||"").localeCompare(b.date||""));
+  return(
+    <div style={{padding:"20px 16px"}}>
+      <div style={{display:"flex",gap:10,marginBottom:20}}>
+        <button onClick={()=>setSubTab("records")} style={{flex:1,padding:"12px",borderRadius:14,border:`2px solid ${C.teal}`,background:subTab==="records"?C.teal:C.teal+"33",cursor:"pointer",fontWeight:800,fontSize:14,color:C.text,fontFamily:"inherit"}}>🩺 בדיקות</button>
+        <button onClick={()=>setSubTab("medicines")} style={{flex:1,padding:"12px",borderRadius:14,border:`2px solid ${C.purple}`,background:subTab==="medicines"?C.purple:C.purple+"33",cursor:"pointer",fontWeight:800,fontSize:14,color:C.text,fontFamily:"inherit"}}>💊 תרופות / משחות</button>
+      </div>
+      {subTab==="records"&&(<>
+        <button onClick={()=>{setEditRecord(null);setShowRecordForm(true);}} style={{width:"100%",padding:"14px",borderRadius:16,background:`linear-gradient(135deg,${C.teal},${C.mint})`,border:"none",cursor:"pointer",fontSize:16,fontWeight:900,color:C.text,fontFamily:"inherit",marginBottom:18}}>+ הוספת בדיקה / תור</button>
+        {future.length>0&&<Section title="📅 בדיקות עתידיות / תורים">{future.map(r=><RecordCard key={r.id} rec={r} onEdit={()=>{setEditRecord(r);setShowRecordForm(true);}} onDelete={()=>onDeleteRecord(r.id)} future/>)}</Section>}
+        <Section title="📋 היסטוריית בדיקות">{past.length===0&&<Empty text="אין בדיקות עדיין"/>}{past.map(r=><RecordCard key={r.id} rec={r} onEdit={()=>{setEditRecord(r);setShowRecordForm(true);}} onDelete={()=>onDeleteRecord(r.id)}/>)}</Section>
+      </>)}
+      {subTab==="medicines"&&(<>
+        <button onClick={()=>{setEditMed(null);setShowMedForm(true);}} style={{width:"100%",padding:"14px",borderRadius:16,background:`linear-gradient(135deg,${C.purple},${C.lavender})`,border:"none",cursor:"pointer",fontSize:16,fontWeight:900,color:C.white,fontFamily:"inherit",marginBottom:18}}>+ הוספת תרופה / משחה</button>
+        {medicines.length===0&&<Empty text="אין תרופות עדיין"/>}
+        {medicines.map(m=><MedCard key={m.id} med={m} onEdit={()=>{setEditMed(m);setShowMedForm(true);}} onDelete={()=>onDeleteMed(m.id)}/>)}
+      </>)}
+      {showRecordForm&&<RecordForm rec={editRecord} onSave={r=>{onSaveRecord(r);setShowRecordForm(false);}} onClose={()=>setShowRecordForm(false)}/>}
+      {showMedForm&&<MedForm med={editMed} onSave={m=>{onSaveMed(m);setShowMedForm(false);}} onClose={()=>setShowMedForm(false)}/>}
+    </div>
+  );
+}
+
+function RecordCard({rec,onEdit,onDelete,future}){
+  const [confirm,setConfirm]=useState(false);
+  return(
+    <div style={{background:C.white,border:`2px solid ${future?C.orange:C.teal}`,borderRadius:16,padding:"14px 16px",marginBottom:10,boxShadow:`0 2px 10px ${C.shadow}`}}>
+      <div style={{display:"flex",alignItems:"flex-start",gap:10}}>
+        <span style={{fontSize:26}}>{future?"📅":"🩺"}</span>
+        <div style={{flex:1}}>
+          <div style={{fontWeight:900,color:C.text,fontSize:15}}>{rec.title}</div>
+          {rec.date&&<div style={{fontSize:12,color:C.soft,marginTop:2}}>{formatFullDate(rec.date+"T12:00:00")}</div>}
+          {rec.doctor&&<div style={{fontSize:12,color:C.soft}}>👨‍⚕️ {rec.doctor}</div>}
+          {rec.location&&<div style={{fontSize:12,color:C.soft}}>📍 {rec.location}</div>}
+          {rec.notes&&<div style={{fontSize:13,color:C.text,marginTop:6,padding:"8px 10px",background:C.bg,borderRadius:8}}>{rec.notes}</div>}
+        </div>
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          <button onClick={onEdit} style={{background:C.lavender+"44",border:`1.5px solid ${C.lavender}`,borderRadius:8,padding:"6px 10px",cursor:"pointer",fontSize:13}}>✏️</button>
+          {!confirm?<button onClick={()=>setConfirm(true)} style={{background:"#fff0f0",border:`1.5px solid ${C.red}`,borderRadius:8,padding:"6px 10px",cursor:"pointer",fontSize:13,color:C.red}}>🗑</button>
+            :<button onClick={onDelete} style={{background:C.red,border:"none",borderRadius:8,padding:"6px 10px",cursor:"pointer",fontSize:11,color:C.white,fontWeight:700}}>בטוח?</button>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MedCard({med,onEdit,onDelete}){
+  const [confirm,setConfirm]=useState(false);
+  const emoji=med.medType==="משחה"?"🧴":med.medType==="טיפות"?"💧":"💊";
+  return(
+    <div style={{background:C.white,border:`2px solid ${C.purple}`,borderRadius:16,padding:"14px 16px",marginBottom:10,boxShadow:`0 2px 10px ${C.shadow}`}}>
+      <div style={{display:"flex",alignItems:"flex-start",gap:10}}>
+        <span style={{fontSize:26}}>{emoji}</span>
+        <div style={{flex:1}}>
+          <div style={{fontWeight:900,color:C.text,fontSize:15}}>{med.name}</div>
+          <div style={{fontSize:12,color:C.lavender,fontWeight:700,marginTop:1}}>{med.medType}</div>
+          {med.dose&&<div style={{fontSize:12,color:C.soft}}>💉 {med.dose}</div>}
+          {med.frequency&&<div style={{fontSize:12,color:C.soft}}>🕐 {med.frequency}</div>}
+          {med.note&&<div style={{fontSize:13,color:C.text,marginTop:6,padding:"8px 10px",background:C.bg,borderRadius:8}}>{med.note}</div>}
+        </div>
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          <button onClick={onEdit} style={{background:C.lavender+"44",border:`1.5px solid ${C.lavender}`,borderRadius:8,padding:"6px 10px",cursor:"pointer",fontSize:13}}>✏️</button>
+          {!confirm?<button onClick={()=>setConfirm(true)} style={{background:"#fff0f0",border:`1.5px solid ${C.red}`,borderRadius:8,padding:"6px 10px",cursor:"pointer",fontSize:13,color:C.red}}>🗑</button>
+            :<button onClick={onDelete} style={{background:C.red,border:"none",borderRadius:8,padding:"6px 10px",cursor:"pointer",fontSize:11,color:C.white,fontWeight:700}}>בטוח?</button>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RecordForm({rec,onSave,onClose}){
+  const [title,setTitle]=useState(rec?.title||"");
+  const [date,setDate]=useState(rec?.date||todayStr());
+  const [future,setFuture]=useState(rec?.future||false);
+  const [doctor,setDoctor]=useState(rec?.doctor||"");
+  const [location,setLocation]=useState(rec?.location||"");
+  const [notes,setNotes]=useState(rec?.notes||"");
+  return(
+    <Sheet title={rec?"עריכת בדיקה ✏️":"הוספת בדיקה 🩺"} onClose={onClose}>
+      <Lbl>שם הבדיקה / ביקור:</Lbl>
+      <input value={title} onChange={e=>setTitle(e.target.value)} placeholder="למשל: בדיקת דם, ביקור רופא..." style={{...inputSt(),marginBottom:14}}/>
+      <Lbl>תאריך:</Lbl>
+      <input type="date" value={date} onChange={e=>setDate(e.target.value)} style={{...inputSt(),marginBottom:10,direction:"ltr"}}/>
+      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14,padding:"10px 14px",background:C.orange+"22",borderRadius:12,border:`1.5px solid ${C.orange}`}}>
+        <input type="checkbox" checked={future} onChange={e=>setFuture(e.target.checked)} style={{width:18,height:18,cursor:"pointer"}}/>
+        <span style={{fontSize:14,fontWeight:700,color:C.text}}>📅 בדיקה עתידית / תור</span>
+      </div>
+      <Lbl>רופא / מומחה:</Lbl>
+      <input value={doctor} onChange={e=>setDoctor(e.target.value)} placeholder="ד״ר שם..." style={{...inputSt(),marginBottom:14}}/>
+      <Lbl>מיקום:</Lbl>
+      <input value={location} onChange={e=>setLocation(e.target.value)} placeholder="בית חולים, קופת חולים..." style={{...inputSt(),marginBottom:14}}/>
+      <Lbl>הערות / ממצאים / מרשם:</Lbl>
+      <textarea value={notes} onChange={e=>setNotes(e.target.value)} placeholder="פרטים, תוצאות, מרשמים שהתקבלו..." rows={4} style={{...inputSt(),resize:"vertical",marginBottom:16}}/>
+      <button onClick={()=>{if(!title.trim())return;onSave({...(rec||{}),title,date,future,doctor,location,notes});}} style={{width:"100%",padding:"14px",borderRadius:16,background:`linear-gradient(135deg,${C.teal},${C.mint})`,border:"none",cursor:"pointer",fontSize:16,fontWeight:900,color:C.text,fontFamily:"inherit"}}>שמור בדיקה ✅</button>
+    </Sheet>
+  );
+}
+
+function MedForm({med,onSave,onClose}){
+  const [name,setName]=useState(med?.name||"");
+  const [medType,setMedType]=useState(med?.medType||"תרופה");
+  const [dose,setDose]=useState(med?.dose||"");
+  const [frequency,setFrequency]=useState(med?.frequency||"");
+  const [note,setNote]=useState(med?.note||"");
+  return(
+    <Sheet title={med?"עריכת תרופה ✏️":"הוספת תרופה / משחה 💊"} onClose={onClose}>
+      <Lbl>סוג:</Lbl>
+      <div style={{display:"flex",gap:8,marginBottom:16}}>
+        {[{v:"תרופה",e:"💊"},{v:"משחה",e:"🧴"},{v:"טיפות",e:"💧"},{v:"אחר",e:"🩺"}].map(t=>(
+          <button key={t.v} onClick={()=>setMedType(t.v)} style={{flex:1,padding:"10px 4px",borderRadius:12,border:`2px solid ${C.purple}`,background:medType===t.v?C.purple:C.purple+"22",cursor:"pointer",fontWeight:800,fontSize:12,color:C.text,fontFamily:"inherit",display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+            <span style={{fontSize:20}}>{t.e}</span>{t.v}
+          </button>
+        ))}
+      </div>
+      <Lbl>שם התרופה / משחה:</Lbl>
+      <input value={name} onChange={e=>setName(e.target.value)} placeholder="שם התרופה..." style={{...inputSt(),marginBottom:14}}/>
+      <Lbl>מינון:</Lbl>
+      <input value={dose} onChange={e=>setDose(e.target.value)} placeholder="למשל: 2.5 מ״ל, פעמיים ביום..." style={{...inputSt(),marginBottom:14}}/>
+      <Lbl>תדירות:</Lbl>
+      <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:10}}>
+        {["פעם ביום","פעמיים ביום","3 פעמים ביום","לפי הצורך"].map(f=>(
+          <button key={f} onClick={()=>setFrequency(f)} style={{padding:"7px 12px",borderRadius:10,border:`1.5px solid ${C.lavender}`,background:frequency===f?C.lavender:C.lavender+"22",cursor:"pointer",fontSize:12,fontWeight:700,color:C.text,fontFamily:"inherit"}}>{f}</button>
+        ))}
+      </div>
+      <input value={frequency} onChange={e=>setFrequency(e.target.value)} placeholder="או הכנס תדירות..." style={{...inputSt(),marginBottom:14}}/>
+      <Lbl>הערות / הוראות:</Lbl>
+      <textarea value={note} onChange={e=>setNote(e.target.value)} placeholder="הוראות שימוש, אזהרות..." rows={3} style={{...inputSt(),resize:"vertical",marginBottom:16}}/>
+      <button onClick={()=>{if(!name.trim())return;onSave({...(med||{}),name,medType,dose,frequency,note});}} style={{width:"100%",padding:"14px",borderRadius:16,background:`linear-gradient(135deg,${C.purple},${C.lavender})`,border:"none",cursor:"pointer",fontSize:16,fontWeight:900,color:C.white,fontFamily:"inherit"}}>שמור תרופה ✅</button>
+    </Sheet>
+  );
+}
+
+function EditModal({entry,onSave,onDelete,onClose}){
+  const {isF,isVit,isDrug}=entryInfo(entry);
+  const [type,setType]=useState(entry.type);
+  const [duration,setDuration]=useState(entry.duration||"");
+  const [ml,setMl]=useState(entry.ml||"");
+  const [vitValue,setVitValue]=useState(entry.value||true);
+  const [timeVal,setTimeVal]=useState(toTimeInput(entry.time));
+  const [performer,setPerformer]=useState(entry.by||"");
+  const [confirmDel,setConfirmDel]=useState(false);
+  function handleSave(){
+    const nt=applyTimeToIso(entry.time,timeVal);
+    if(isVit){onSave({...entry,time:nt,value:vitValue,by:performer});return;}
+    if(isDrug){onSave({...entry,time:nt,by:performer});return;}
+    const u={...entry,type,time:nt,by:performer};
+    if(isF&&type==="breast"){u.duration=Number(duration);delete u.ml;}
+    if(isF&&type==="bottle"){u.ml=Number(ml);delete u.duration;}
+    onSave(u);
+  }
+  const title=isVit?(entry.key==="simecol"?"עריכת סימיקול 🔵":entry.key==="vitD"?"עריכת ויטמין D ☀️":"עריכת ברזל 🩸"):isDrug?`עריכת ${entry.name} 💊`:isF?"עריכת האכלה ✏️":"עריכת חיתול ✏️";
+  return(
+    <Sheet title={title} onClose={onClose}>
+      <div style={{background:C.lavender+"33",border:`2px solid ${C.lavender}`,borderRadius:16,padding:"14px 16px",marginBottom:18}}>
+        <Lbl>🕐 שעה:</Lbl>
+        <input type="time" value={timeVal} onChange={e=>setTimeVal(e.target.value)} style={{width:"100%",padding:"12px",borderRadius:12,border:`2px solid ${C.lavender}`,fontSize:24,fontWeight:900,color:C.text,background:C.white,outline:"none",fontFamily:"inherit",textAlign:"center",boxSizing:"border-box",direction:"ltr"}}/>
+        <div style={{fontSize:11,color:C.soft,marginTop:6,textAlign:"center"}}>{new Date(entry.time).toLocaleDateString("he-IL",{weekday:"long",day:"numeric",month:"long"})}</div>
+      </div>
+      {isVit&&(<>{entry.key==="simecol"?(<><Lbl>כמות מ״ל:</Lbl><div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:12}}>{[0.2,0.3,0.4].map(v=><button key={v} onClick={()=>setVitValue(v)} style={{background:vitValue===v?C.blue:C.blue+"44",border:`2.5px solid ${C.blue}`,borderRadius:14,padding:"14px 6px",cursor:"pointer",fontFamily:"inherit"}}><div style={{fontSize:22,fontWeight:900,color:C.text}}>{v}</div><div style={{fontSize:11,color:C.soft,marginTop:2}}>מ״ל</div>{vitValue===v&&<div style={{fontSize:10}}>✅</div>}</button>)}</div><input type="number" step="0.1" value={typeof vitValue==="number"&&![0.2,0.3,0.4].includes(vitValue)?vitValue:""} onChange={e=>setVitValue(parseFloat(e.target.value))} placeholder="כמות אחרת..." style={{...inputSt(),marginBottom:8}}/></>):(<div style={{background:(entry.key==="vitD"?C.yellow:C.peach)+"33",borderRadius:14,padding:14,textAlign:"center",marginBottom:8}}><div style={{fontSize:28}}>{entry.key==="vitD"?"☀️":"🩸"}</div><div style={{fontWeight:800,color:C.text}}>{entry.key==="vitD"?"ויטמין D":"ברזל"} ✅</div></div>)}</>)}
+      {isDrug&&<div style={{background:C.purple+"22",borderRadius:14,padding:14,marginBottom:8,textAlign:"center"}}><div style={{fontSize:28}}>💊</div><div style={{fontWeight:800,color:C.text}}>{entry.name}</div><div style={{fontSize:12,color:C.soft,marginTop:4}}>ניתן לשנות שעה ומבצע בלבד</div></div>}
+      {isF&&(<><Lbl>סוג האכלה:</Lbl><div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:16}}>{[{v:"breast",e:"🤱",l:"שד",c:C.pink},{v:"bottle",e:"🍼",l:"בקבוק",c:C.peach},{v:"pump",e:"🫙",l:"שאיבה",c:C.teal}].map(o=><button key={o.v} onClick={()=>setType(o.v)} style={{background:type===o.v?o.c:o.c+"22",border:`2px solid ${o.c}`,borderRadius:14,padding:"10px 4px",cursor:"pointer",fontWeight:800,fontFamily:"inherit",fontSize:13,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}><span style={{fontSize:22}}>{o.e}</span>{o.l}</button>)}</div>{type==="breast"?(<><Lbl>דקות:</Lbl><div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:10}}>{[5,10,15,20,25,30].map(v=><button key={v} onClick={()=>setDuration(v)} style={{background:duration===v?C.pink:C.pink+"33",border:`2px solid ${C.pink}`,borderRadius:10,padding:"8px 14px",cursor:"pointer",fontWeight:800,fontFamily:"inherit"}}>{v}</button>)}</div><input type="number" value={duration} onChange={e=>setDuration(e.target.value)} placeholder="דקות..." style={{...inputSt(),marginBottom:4}}/></>):(<><Lbl>{type==="pump"?"מ״ל שנשאב:":"מ״ל:"}</Lbl><div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:10}}>{(type==="pump"?[30,40,50,60,70,80,90]:[60,70,80,90,100,120]).map(v=><button key={v} onClick={()=>setMl(v)} style={{background:ml===v?(type==="pump"?C.teal:C.peach):(type==="pump"?C.teal:C.peach)+"33",border:`2px solid ${type==="pump"?C.teal:C.peach}`,borderRadius:10,padding:"8px 14px",cursor:"pointer",fontWeight:800,fontFamily:"inherit"}}>{v}</button>)}</div><input type="number" value={ml} onChange={e=>setMl(e.target.value)} placeholder='מ"ל...' style={{...inputSt(),marginBottom:4}}/></>)}</>)}
+      {!isF&&!isVit&&!isDrug&&(<><Lbl>סוג חיתול:</Lbl><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>{[{v:"wet",e:"💧",l:"רטוב"},{v:"dirty",e:"💩",l:"מלוכלך"},{v:"both",e:"💧💩",l:"שניהם"},{v:"dry",e:"✨",l:"יבש"}].map(o=><button key={o.v} onClick={()=>setType(o.v)} style={{background:type===o.v?C.mint:C.mint+"22",border:`2px solid ${C.mint}`,borderRadius:14,padding:"13px 8px",cursor:"pointer",fontWeight:800,fontFamily:"inherit",fontSize:14}}>{o.e} {o.l}</button>)}</div></>)}
+      <div style={{marginTop:16,marginBottom:4}}>
+        <Lbl>👤 מי ביצע?</Lbl>
+        <div style={{display:"flex",gap:8,marginBottom:8}}>
+          {["חן","רחל"].map(name=><button key={name} onClick={()=>setPerformer(name)} style={{flex:1,padding:"10px 6px",borderRadius:12,border:`2px solid ${C.lavender}`,background:performer===name?C.lavender:C.lavender+"22",cursor:"pointer",fontWeight:800,fontSize:14,color:C.text,fontFamily:"inherit"}}>{name==="חן"?"👨 ":"👩 "}{name}</button>)}
+        </div>
+        <input value={["חן","רחל"].includes(performer)?"":performer} onChange={e=>setPerformer(e.target.value)} placeholder="👤 אחר — הכנס שם..." style={{...inputSt()}}/>
+      </div>
+      <button onClick={handleSave} style={{width:"100%",marginTop:18,padding:"14px",borderRadius:16,background:`linear-gradient(135deg,${C.pink},${C.lavender})`,border:"none",cursor:"pointer",fontSize:16,fontWeight:900,color:C.white,fontFamily:"inherit"}}>שמור שינויים ✅</button>
+      {!confirmDel?<button onClick={()=>setConfirmDel(true)} style={{width:"100%",marginTop:10,padding:"12px",borderRadius:14,background:"#fff0f0",border:`1.5px solid ${C.red}`,cursor:"pointer",fontSize:14,fontWeight:700,color:C.red,fontFamily:"inherit"}}>🗑 מחק רשומה זו</button>
+        :<div style={{marginTop:10,background:"#fff0f0",borderRadius:14,padding:14,border:`1.5px solid ${C.red}`}}><div style={{textAlign:"center",fontWeight:700,color:C.red,marginBottom:12}}>בטוח למחוק?</div><div style={{display:"flex",gap:10}}><button onClick={()=>onDelete(entry.id)} style={{flex:1,padding:"11px",borderRadius:12,background:C.red,border:"none",cursor:"pointer",fontSize:14,fontWeight:900,color:C.white,fontFamily:"inherit"}}>כן, מחק</button><button onClick={()=>setConfirmDel(false)} style={{flex:1,padding:"11px",borderRadius:12,background:C.bg,border:`1.5px solid ${C.soft}`,cursor:"pointer",fontSize:14,fontWeight:700,color:C.soft,fontFamily:"inherit"}}>ביטול</button></div></div>}
+    </Sheet>
+  );
+}
+
+function EntryRow({entry,fallback,onEdit,showAgo}){
+  if(!entry)return <div style={{background:"#f5f0ff",borderRadius:14,padding:"12px 14px",color:C.soft,fontSize:13,textAlign:"center",marginBottom:8}}>{fallback}</div>;
+  const {emoji,label,sub,color}=entryInfo(entry);
+  const canEdit=!!onEdit;
+  return(
+    <div onClick={()=>canEdit&&onEdit(entry)} style={{background:color+"22",border:`1.5px solid ${color}`,borderRadius:14,padding:"12px 14px",display:"flex",alignItems:"center",gap:12,marginBottom:8,cursor:canEdit?"pointer":"default"}}>
+      <span style={{fontSize:24}}>{emoji}</span>
+      <div style={{flex:1}}>
+        <div style={{fontWeight:800,color:C.text,fontSize:14}}>{label}</div>
+        {sub&&<div style={{fontSize:13,color:C.soft,fontWeight:600}}>{sub}</div>}
+        {entry.by&&<div style={{fontSize:11,color:C.lavender,fontWeight:700,marginTop:2}}>👤 {entry.by}</div>}
+      </div>
+      <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:2}}>
+        <div style={{fontSize:13,fontWeight:800,color:C.text}}>{formatTime(entry.time)}</div>
+        {showAgo&&<div style={{fontSize:11,color:C.soft}}>{timeAgo(entry.time)}</div>}
+        {canEdit&&<span style={{fontSize:11,color:C.lavender,fontWeight:700}}>✏️</span>}
+      </div>
+    </div>
+  );
+}
+
+function WhoModal({pendingEntry, onDone, onClose}){
+  const [showCustom,setShowCustom]=useState(false);
+  const [customName,setCustomName]=useState("");
+  return(
+    <Sheet title="מי ביצע? 👤" onClose={onClose}>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+        {["חן","רחל"].map(name=>(
+          <button key={name} onClick={()=>onDone(name)}
+            style={{background:C.lavender+"44",border:`2.5px solid ${C.lavender}`,borderRadius:18,padding:"22px 10px",cursor:"pointer",fontFamily:"inherit",display:"flex",flexDirection:"column",alignItems:"center",gap:8}}>
+            <span style={{fontSize:34}}>{name==="חן"?"👨":"👩"}</span>
+            <span style={{fontSize:18,fontWeight:900,color:C.text}}>{name}</span>
+          </button>
+        ))}
+      </div>
+      {!showCustom
+        ? <button onClick={()=>setShowCustom(true)}
+            style={{width:"100%",padding:"14px",borderRadius:16,background:C.bg,border:`2px solid ${C.soft}`,cursor:"pointer",fontSize:16,fontWeight:800,color:C.soft,fontFamily:"inherit"}}>
+            👤 אחר — מי זה?
+          </button>
+        : <div style={{background:C.lavender+"22",border:`2px solid ${C.lavender}`,borderRadius:16,padding:"16px"}}>
+            <Lbl>הכנס שם:</Lbl>
+            <div style={{display:"flex",gap:10}}>
+              <input
+                autoFocus
+                value={customName}
+                onChange={e=>setCustomName(e.target.value)}
+                onKeyDown={e=>e.key==="Enter"&&customName.trim()&&onDone(customName.trim())}
+                placeholder="שם המבצע..."
+                style={{flex:1,...inputSt()}}
+              />
+              <button
+                onClick={()=>{if(customName.trim())onDone(customName.trim());}}
+                disabled={!customName.trim()}
+                style={{background:customName.trim()?C.lavender:C.soft,border:"none",borderRadius:12,padding:"12px 18px",cursor:customName.trim()?"pointer":"not-allowed",fontWeight:900,fontSize:18,fontFamily:"inherit"}}>
+                ✅
+              </button>
+            </div>
+          </div>
+      }
+    </Sheet>
+  );
+}
+
+function QuickPicker({options,color,unit,placeholder,onSelect}){
+  const [custom,setCustom]=useState("");
+  return(<div>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:14}}>
+      {options.map(v=><button key={v} onClick={()=>onSelect(v)} style={{background:color+"44",border:`2px solid ${color}`,borderRadius:14,padding:"14px 6px",cursor:"pointer",fontWeight:900,fontSize:17,color:C.text,fontFamily:"inherit"}}>{v}<div style={{fontSize:11,fontWeight:600,color:C.soft,marginTop:2}}>{unit}</div></button>)}
+    </div>
+    <Lbl>אחר:</Lbl>
+    <div style={{display:"flex",gap:10}}>
+      <input type="number" value={custom} onChange={e=>setCustom(e.target.value)} placeholder={placeholder} style={{flex:1,...inputSt()}}/>
+      <button onClick={()=>{if(custom)onSelect(Number(custom));}} style={{background:color,border:"none",borderRadius:12,padding:"12px 18px",cursor:"pointer",fontWeight:900,fontSize:18,fontFamily:"inherit"}}>✅</button>
+    </div>
+  </div>);
+}
+
+function CustomInput({color,placeholder,step,onSelect}){
+  const [val,setVal]=useState("");
+  return(<div style={{display:"flex",gap:10}}>
+    <input type="number" step={step||"1"} value={val} onChange={e=>setVal(e.target.value)} placeholder={placeholder} style={{flex:1,...inputSt()}}/>
+    <button onClick={()=>{if(val){onSelect(parseFloat(val));setVal("");}}} style={{background:color,border:"none",borderRadius:12,padding:"11px 16px",cursor:"pointer",fontWeight:900,fontSize:17,fontFamily:"inherit"}}>✅</button>
+  </div>);
+}
+
+function Sheet({title,onClose,children}){
+  return(
+    <div style={{position:"fixed",inset:0,background:"rgba(61,43,79,0.38)",zIndex:200,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={onClose}>
+      <div style={{background:C.white,borderRadius:"28px 28px 0 0",padding:"24px 20px 44px",width:"100%",maxWidth:480,boxShadow:"0 -8px 40px rgba(0,0,0,0.13)",maxHeight:"92vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}}>
+          <span style={{fontSize:19,fontWeight:900,color:C.text}}>{title}</span>
+          <button onClick={onClose} style={{background:"#f0eaf7",border:"none",borderRadius:10,width:34,height:34,cursor:"pointer",fontSize:17}}>✕</button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function Section({title,children}){return <div style={{marginBottom:22}}><div style={{fontSize:15,fontWeight:900,color:C.text,marginBottom:12}}>{title}</div>{children}</div>;}
+function StatCard({emoji,val,label,color}){return <div style={{background:color+"33",border:`2px solid ${color}`,borderRadius:14,padding:"10px 4px",textAlign:"center"}}><div style={{fontSize:18}}>{emoji}</div><div style={{fontSize:18,fontWeight:900,color:C.text}}>{val}</div><div style={{fontSize:10,color:C.soft,fontWeight:600}}>{label}</div></div>;}
+function ActionBtn({emoji,label,color,onClick}){return <button onClick={onClick} style={{background:color+"33",border:`2px solid ${color}`,borderRadius:18,padding:"20px 10px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:8,width:"100%",fontFamily:"inherit",boxShadow:`0 3px 12px ${color}44`}}><span style={{fontSize:36}}>{emoji}</span><span style={{fontSize:16,fontWeight:800,color:C.text}}>{label}</span></button>;}
+function BigBtn({emoji,label,color,onClick}){return <button onClick={onClick} style={{background:color+"33",border:`2px solid ${color}`,borderRadius:18,padding:"22px 10px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:8,width:"100%",fontFamily:"inherit"}}><span style={{fontSize:34}}>{emoji}</span><span style={{fontSize:16,fontWeight:800,color:C.text}}>{label}</span></button>;}
+function VitBtn({emoji,label,done,sub,color,onClick}){return <button onClick={onClick} style={{flex:1,background:done?color:color+"33",border:`2px solid ${color}`,borderRadius:16,padding:"12px 6px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3,transition:"all 0.2s",fontFamily:"inherit",boxShadow:done?`0 4px 14px ${color}88`:"none"}}><span style={{fontSize:24}}>{emoji}</span><span style={{fontSize:11,fontWeight:800,color:C.text}}>{label}</span>{sub?<span style={{fontSize:11,fontWeight:700,color:C.text}}>{sub}</span>:<span style={{fontSize:10,fontWeight:700,color:done?C.text:C.soft}}>{done?"✅ ניתן":"טרם"}</span>}</button>;}
+function Empty({text}){return <div style={{textAlign:"center",color:C.soft,padding:"30px 0",fontSize:15}}>{text}</div>;}
+function Lbl({children}){return <div style={{fontSize:13,fontWeight:700,color:C.soft,marginBottom:8}}>{children}</div>;}
+function chip(active,color){return{padding:"8px 16px",borderRadius:20,border:`2px solid ${color}`,background:active?color:color+"22",cursor:"pointer",fontWeight:700,fontSize:13,color:C.text,fontFamily:"inherit"};}
+function inputSt(){return{width:"100%",padding:"12px 14px",borderRadius:12,border:`2px solid ${C.lavender}`,fontSize:15,color:C.text,background:C.bg,outline:"none",fontFamily:"inherit",boxSizing:"border-box"};}
+
+ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+
+ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
+</script>
+</body>
+</html>
