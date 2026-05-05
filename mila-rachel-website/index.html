@@ -479,8 +479,8 @@ function renderHome(){
     <div class="stat-card" style="background:rgba(168,216,249,.2);border:2px solid #A8D8F9"><div class="emoji">🔵</div><div class="val">${todayVits.simecol||"—"}</div><div class="lbl">סימיקול</div></div>
   `;
 
-  const lastF=DATA.entries.find(e=>e.category==="feeding");
-  const lastD=DATA.entries.find(e=>e.category==="diaper");
+  const lastF=DATA.entries.filter(e=>e.category==="feeding").sort((a,b)=>new Date(b.time)-new Date(a.time))[0]||null;
+  const lastD=DATA.entries.filter(e=>e.category==="diaper").sort((a,b)=>new Date(b.time)-new Date(a.time))[0]||null;
   document.getElementById("last-feeding-row").innerHTML=lastF?renderEntryRow(lastF,true,true):`<div class="entry-row" style="background:#f5f0ff;border-color:#f5f0ff;justify-content:center"><span style="color:#9B8AAD;font-size:13px">עוד לא נרשמה האכלה</span></div>`;
   document.getElementById("last-diaper-row").innerHTML=lastD?renderEntryRow(lastD,true,true):`<div class="entry-row" style="background:#f5f0ff;border-color:#f5f0ff;justify-content:center"><span style="color:#9B8AAD;font-size:13px">עוד לא נרשם חיתול</span></div>`;
 
@@ -658,7 +658,7 @@ function renderMedical(){
 }
 
 function updateAlert(){
-  const lastF=DATA.entries.find(e=>e.category==="feeding");
+  const lastF=DATA.entries.filter(e=>e.category==="feeding").sort((a,b)=>new Date(b.time)-new Date(a.time))[0]||null;
   const banner=document.getElementById("alert-banner");
   const timer=document.getElementById("feeding-timer");
 
