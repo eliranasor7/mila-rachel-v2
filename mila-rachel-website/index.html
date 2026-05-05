@@ -41,17 +41,23 @@ input,textarea{font-family:inherit;outline:none;}
 #alert-banner .alert-sub{font-size:12px;color:rgba(255,255,255,.85);margin-top:2px;}
 
 /* FEEDING TIMER */
-#feeding-timer{margin:12px 16px 0;background:#fff;border-radius:20px;padding:14px 18px;display:none;align-items:center;gap:14px;box-shadow:0 2px 16px rgba(249,168,201,.25);border:2px solid #F9A8C9;}
+#feeding-timer{margin:12px 16px 0;background:#fff;border-radius:20px;padding:14px 18px;display:none;flex-direction:column;gap:10px;box-shadow:0 2px 16px rgba(249,168,201,.25);border:2px solid #F9A8C9;}
 #feeding-timer.show{display:flex;}
+#feeding-timer .timer-top{display:flex;align-items:center;gap:14px;}
 #feeding-timer .timer-clock{font-size:36px;}
 #feeding-timer .timer-info{flex:1;}
 #feeding-timer .timer-label{font-size:12px;color:#9B8AAD;font-weight:600;}
 #feeding-timer .timer-value{font-size:26px;font-weight:900;color:#3D2B4F;line-height:1.1;font-variant-numeric:tabular-nums;}
-#feeding-timer .timer-next{font-size:11px;color:#9B8AAD;margin-top:2px;}
 #feeding-timer .timer-bar-wrap{width:42px;display:flex;flex-direction:column;align-items:center;gap:4px;}
 #feeding-timer .timer-bar-bg{width:8px;height:60px;background:#f0e8ff;border-radius:8px;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;}
 #feeding-timer .timer-bar-fill{width:100%;background:linear-gradient(to top,#F9A8C9,#C5B4E8);border-radius:8px;transition:height .5s;}
 #feeding-timer .timer-pct{font-size:10px;font-weight:700;color:#9B8AAD;}
+#feeding-timer .timer-next-box{background:#FFF8F5;border-radius:14px;padding:10px 14px;border:1.5px solid #F9A8C9;text-align:center;}
+#feeding-timer .timer-next-label{font-size:11px;color:#9B8AAD;font-weight:600;margin-bottom:2px;}
+#feeding-timer .timer-next-time{font-size:30px;font-weight:900;color:#3D2B4F;letter-spacing:1px;}
+#feeding-timer .timer-next-sub{font-size:12px;color:#9B8AAD;margin-top:2px;font-weight:600;}
+#feeding-timer.overdue .timer-next-box{background:#fff0f0;border-color:#FF6B6B;}
+#feeding-timer.overdue .timer-next-time{color:#FF6B6B;}
 
 /* PAGES */
 .page{padding:16px 16px 20px;display:none;}
@@ -213,15 +219,21 @@ textarea.inp{resize:vertical;}
 
 <!-- FEEDING TIMER -->
 <div id="feeding-timer">
-  <div class="timer-clock">⏱️</div>
-  <div class="timer-info">
-    <div class="timer-label">מאז האכלה אחרונה</div>
-    <div class="timer-value" id="timer-value">--:--</div>
-    <div class="timer-next" id="timer-next"></div>
+  <div class="timer-top">
+    <div class="timer-clock">⏱️</div>
+    <div class="timer-info">
+      <div class="timer-label">מאז האכלה אחרונה</div>
+      <div class="timer-value" id="timer-value">--:--</div>
+    </div>
+    <div class="timer-bar-wrap">
+      <div class="timer-bar-bg"><div class="timer-bar-fill" id="timer-bar" style="height:0%"></div></div>
+      <div class="timer-pct" id="timer-pct">0%</div>
+    </div>
   </div>
-  <div class="timer-bar-wrap">
-    <div class="timer-bar-bg"><div class="timer-bar-fill" id="timer-bar" style="height:0%"></div></div>
-    <div class="timer-pct" id="timer-pct">0%</div>
+  <div class="timer-next-box">
+    <div class="timer-next-label">🍼 האכלה הבאה בשעה</div>
+    <div class="timer-next-time" id="timer-next-time">--:--</div>
+    <div class="timer-next-sub" id="timer-next-sub"></div>
   </div>
 </div>
 
@@ -675,11 +687,14 @@ function updateAlert(){
   const nextFeedingTime = new Date(new Date(lastF.time).getTime() + 3*60*60*1000);
   const nextStr = nextFeedingTime.toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"});
   const minsLeft=totalMins-mins;
+  document.getElementById("timer-next-time").textContent=nextStr;
   if(minsLeft>0){
     const hl=Math.floor(minsLeft/60),ml=minsLeft%60;
-    document.getElementById("timer-next").textContent=`🍼 האכלה הבאה ב-${nextStr} (עוד ${hl>0?hl+" ש' ":""}${ml} דק')`;
+    document.getElementById("timer-next-sub").textContent=`עוד ${hl>0?hl+" ש' ":""}${ml} דק'`;
+    timer.classList.remove("overdue");
   } else {
-    document.getElementById("timer-next").textContent=`⚠️ היה אמור ב-${nextStr} — עבר הזמן!`;
+    document.getElementById("timer-next-sub").textContent="⚠️ עבר הזמן!";
+    timer.classList.add("overdue");
   }
   timer.className="show";timer.style.display="";
 
