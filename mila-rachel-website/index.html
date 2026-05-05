@@ -515,7 +515,7 @@ function vitBtn(emoji,label,done,color,onclick){
   </button>`;
 }
 function vitBtnSim(val){
-  return`<button class="vit-btn${val?" done":""}" style="background:${val?"#A8D8F9":"rgba(168,216,249,.2)"};border-color:#A8D8F9;box-shadow:${val?"0 4px 14px rgba(168,216,249,.5)":""}" onclick="toggleSimecol()">
+  return`<button class="vit-btn${val?" done":""}" style="background:${val?"#A8D8F9":"rgba(168,216,249,.2)"};border-color:#A8D8F9;box-shadow:${val?"0 4px 14px rgba(168,216,249,.5)":""}" onclick="openSheet('simecol-modal')">
     <span class="v-emoji">🔵</span>
     <span class="v-label">סימיקול</span>
     <span class="v-status">${val?`${val} מ״ל`:"טרם"}</span>
@@ -732,8 +732,13 @@ function giveSimecol(v){
   saveData();renderAll();showToast("✅ סימיקול עודכן!");
 }
 function toggleSimecol(){
+  const picker=document.getElementById("simecol-picker");
+  if(!picker||picker.offsetParent===null){
+    openSheet('simecol-modal');
+    return;
+  }
   showSim=!showSim;
-  document.getElementById("simecol-picker").style.display=showSim?"":"none";
+  picker.style.display=showSim?"":"none";
 }
 
 // ── WHO MODAL ─────────────────────────────────────────────────────────────────
