@@ -1068,7 +1068,7 @@ function renderEditSheet(e){
         <button class="perf-btn${e.by==="חן"?" active":""}" id="pf-chen" onclick="setPerformer('חן')">👨 חן</button>
         <button class="perf-btn${e.by==="רחל"?" active":""}" id="pf-rachel" onclick="setPerformer('רחל')">👩 רחל</button>
       </div>
-      <input class="inp" id="edit-performer" value="${["חן","רחל"].includes(e.by)?"":e.by||""}" placeholder="👤 אחר — הכנס שם..."/>
+      <input class="inp" id="edit-performer" value="${["חן","רחל"].includes(e.by)?"":e.by||""}" data-selected="${["חן","רחל"].includes(e.by)?e.by:""}" placeholder="👤 אחר — הכנס שם..."/>
     </div>
     <button class="save-btn" onclick="saveEditEntry()">שמור שינויים ✅</button>
     <button class="del-btn" onclick="showDeleteConfirm()">🗑 מחק רשומה זו</button>
@@ -1110,10 +1110,12 @@ function setEditDiaperType(t){
   currentEditEntry._editDiaperType=t;
 }
 function setPerformer(n){
-  ["chen","rachel"].forEach(x=>document.getElementById("pf-"+x)?.classList.remove("active"));
+  ["pf-chen","pf-rachel"].forEach(x=>document.getElementById(x)?.classList.remove("active"));
   if(n==="חן")document.getElementById("pf-chen")?.classList.add("active");
   else if(n==="רחל")document.getElementById("pf-rachel")?.classList.add("active");
   document.getElementById("edit-performer").value="";
+  // שמור את הבחירה על הכפתור עצמו
+  document.getElementById("edit-performer").dataset.selected=n;
 }
 function showDeleteConfirm(){document.getElementById("delete-confirm").style.display="";}
 function confirmDelete(){
@@ -1127,8 +1129,11 @@ function saveEditEntry(){
   const tInp=document.getElementById("edit-time").value;
   const [h,m]=tInp.split(":").map(Number);
   const nd=new Date(e.time);nd.setHours(h,m,0,0);
-  const performer=document.getElementById("edit-performer")?.value.trim()||e.by||"";
-  const actualPerformer=["חן","רחל"].includes(e.by)&&!document.getElementById("edit-performer")?.value.trim()?e.by:performer;
+
+  // קרא את המבצע — קודם שדה חופשי, אחר כך כפתור שנבחר
+  const freeText=document.getElementById("edit-performer")?.value.trim();
+  const selectedBtn=document.getElementById("edit-performer")?.dataset.selected;
+  const actualPerformer=freeText||selectedBtn||e.by||"";
 
   let updated={...e,time:nd.toISOString(),by:actualPerformer};
   if(e.category==="vitamin"){updated.value=e._editVitVal||e.value;}
