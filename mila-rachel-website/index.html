@@ -102,7 +102,20 @@ input,textarea{font-family:inherit;outline:none;}
 .vit-btn.done .v-status{color:#3D2B4F;}
 .vit-btn .v-count{position:absolute;top:4px;left:4px;background:#FF6B6B;color:#fff;border-radius:10px;font-size:9px;font-weight:900;padding:1px 5px;}
 
-.note-card{background:#fff;border-radius:16px;padding:14px 16px;margin-bottom:10px;box-shadow:0 2px 10px rgba(61,43,79,.08);border:1.5px solid #C5B4E8;transition:all .2s;}
+.stats-section{background:#fff;border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 2px 10px rgba(61,43,79,.08);}
+.stats-section-title{font-size:13px;font-weight:700;color:#9B8AAD;margin-bottom:12px;}
+.stats-big{font-size:36px;font-weight:900;color:#3D2B4F;line-height:1;}
+.stats-big-label{font-size:12px;color:#9B8AAD;margin-top:4px;font-weight:600;}
+.stats-row-item{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f5f0ff;}
+.stats-row-item:last-child{border-bottom:none;}
+.stats-row-item .sri-label{font-size:14px;font-weight:700;color:#3D2B4F;}
+.stats-row-item .sri-val{font-size:14px;font-weight:900;color:#3D2B4F;}
+.stats-row-item .sri-bar-wrap{flex:1;margin:0 12px;height:8px;background:#f0e8ff;border-radius:8px;overflow:hidden;}
+.stats-row-item .sri-bar{height:100%;border-radius:8px;transition:width .5s;}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.stats-mini{background:#FFF8F5;border-radius:14px;padding:12px;text-align:center;border:1.5px solid #C5B4E8;}
+.stats-mini .sm-val{font-size:24px;font-weight:900;color:#3D2B4F;}
+.stats-mini .sm-label{font-size:11px;color:#9B8AAD;font-weight:600;margin-top:3px;}border-radius:16px;padding:14px 16px;margin-bottom:10px;box-shadow:0 2px 10px rgba(61,43,79,.08);border:1.5px solid #C5B4E8;transition:all .2s;}
 .note-card.done{border-color:#9EDFCC;background:#f5fff9;}
 .note-card .note-top{display:flex;align-items:flex-start;gap:12px;}
 .note-card .note-check{width:26px;height:26px;border-radius:50%;border:2px solid #C5B4E8;background:#fff;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;margin-top:2px;transition:all .2s;}
@@ -336,6 +349,12 @@ textarea.inp{resize:vertical;}
   </div>
 </div>
 
+<!-- STATS PAGE -->
+<div id="page-stats" class="page">
+  <div style="font-size:15px;font-weight:900;color:#3D2B4F;margin-bottom:16px">📊 סטטיסטיקות</div>
+  <div id="stats-content"></div>
+</div>
+
 <!-- NOTES PAGE -->
 <div id="page-notes" class="page">
   <div class="add-header">
@@ -358,6 +377,7 @@ textarea.inp{resize:vertical;}
   <button class="nav-btn" id="nav-vitamins" onclick="goTab('vitamins')"><span>💊</span><span>ויטמינים</span></button>
   <button class="nav-btn" id="nav-medical" onclick="goTab('medical')"><span>🏥</span><span>רפואי</span></button>
   <button class="nav-btn" id="nav-notes" onclick="goTab('notes')"><span>📝</span><span>הערות</span></button>
+  <button class="nav-btn" id="nav-stats" onclick="goTab('stats')"><span>📊</span><span>סטטס</span></button>
 </nav>
 
 <!-- FIREBASE -->
@@ -585,12 +605,123 @@ function saveNote(id){
   closeSheet();saveData();renderNotes();showToast("✅ נשמר!");
 }
 
+// ── STATS ─────────────────────────────────────────────────────────────────────
+function renderStats(){
+  const el=document.getElementById("stats-content");
+  if(!el)return;
+
+  const now=Date.now();
+  const h24=now-24*60*60*1000;
+  const h168=now-7*24*60*60*1000;
+
+  const feedings=DATA.entries.filter(e=>e.category==="feeding");
+  const f24=feedings.filter(e=>new Date(e.time).getTime()>h24).sort((a,b)=>new Date(a.time)-new Date(b.time));
+  const f168=feedings.filter(e=>new Date(e.time).getTime()>h168).sort((a,b)=>new Date(a.time)-new Date(b.time));
+
+  // ממוצע זמן בין האכלות
+  function avgInterval(arr){
+    if(arr.length<2)return null;
+    let total=0;
+    for(let i=1;i<arr.length;i++){total+=new Date(arr[i].time)-new Date(arr[i-1].time);}
+    return total/(arr.length-1)/60000; // דקות
+  }
+  function fmtMins(m){if(!m)return "—";const h=Math.floor(m/60),mn=Math.round(m%60);return h>0?`${h}ש' ${mn}דק'`:`${mn} דק'`;}
+
+  const avg24=avgInterval(f24);
+  const avg7=avgInterval(f168);
+
+  // כמות מ"ל ב24 שעות
+  const ml24=f24.filter(e=>e.ml).reduce((s,e)=>s+(e.ml||0),0);
+  const ml7=f168.filter(e=>e.ml).reduce((s,e)=>s+(e.ml||0),0);
+
+  // מי האכיל
+  const byPerson={};
+  feedings.forEach(e=>{
+    const who=e.by||"לא צוין";
+    byPerson[who]=(byPerson[who]||0)+1;
+  });
+  const total=feedings.length;
+  const sortedPeople=Object.entries(byPerson).sort((a,b)=>b[1]-a[1]);
+  const maxCount=sortedPeople[0]?.[1]||1;
+
+  // צבעים לאנשים
+  const personColors={"חן":"#A8D8F9","רחל":"#F9A8C9"};
+  function personColor(name){return personColors[name]||"#C5B4E8";}
+
+  el.innerHTML=`
+    <!-- ממוצע זמן בין האכלות -->
+    <div class="stats-section">
+      <div class="stats-section-title">⏱️ ממוצע זמן בין האכלות</div>
+      <div class="stats-grid">
+        <div class="stats-mini" style="border-color:#F9A8C9">
+          <div class="sm-val" style="color:#F9A8C9">${fmtMins(avg24)}</div>
+          <div class="sm-label">24 שעות אחרונות</div>
+          <div style="font-size:10px;color:#C5B4E8;margin-top:2px">${f24.length} האכלות</div>
+        </div>
+        <div class="stats-mini" style="border-color:#C5B4E8">
+          <div class="sm-val" style="color:#C5B4E8">${fmtMins(avg7)}</div>
+          <div class="sm-label">7 ימים אחרונים</div>
+          <div style="font-size:10px;color:#C5B4E8;margin-top:2px">${f168.length} האכלות</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- כמות מ"ל -->
+    <div class="stats-section">
+      <div class="stats-section-title">🍼 סה"כ מ״ל שתתה</div>
+      <div class="stats-grid">
+        <div class="stats-mini" style="border-color:#FFCBA4">
+          <div class="sm-val" style="color:#FFCBA4">${ml24}</div>
+          <div class="sm-label">מ״ל ב-24 שעות</div>
+        </div>
+        <div class="stats-mini" style="border-color:#FFE99A">
+          <div class="sm-val" style="color:#FFB347">${ml7}</div>
+          <div class="sm-label">מ״ל ב-7 ימים</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- מי האכיל -->
+    <div class="stats-section">
+      <div class="stats-section-title">👤 מי האכיל — כל הזמן (${total} האכלות)</div>
+      ${sortedPeople.length===0?`<div class="empty">אין נתונים עדיין</div>`:
+        sortedPeople.map(([name,count])=>`
+          <div class="stats-row-item">
+            <div class="sri-label">${name==="חן"?"👨 חן":name==="רחל"?"👩 רחל":name==="לא צוין"?"❓ לא צוין":"👤 "+name}</div>
+            <div class="sri-bar-wrap"><div class="sri-bar" style="width:${Math.round(count/maxCount*100)}%;background:${personColor(name)}"></div></div>
+            <div class="sri-val">${count} <span style="font-size:11px;color:#9B8AAD">(${Math.round(count/total*100)}%)</span></div>
+          </div>
+        `).join("")
+      }
+    </div>
+
+    <!-- האכלות לפי סוג -->
+    <div class="stats-section">
+      <div class="stats-section-title">📈 האכלות לפי סוג — כל הזמן</div>
+      ${(()=>{
+        const types={breast:0,bottle:0,pump:0};
+        feedings.forEach(e=>{if(e.type in types)types[e.type]++;});
+        const tLabels={breast:"🤱 שד",bottle:"🍼 בקבוק",pump:"🫙 שאיבה"};
+        const tColors={breast:"#F9A8C9",bottle:"#FFCBA4",pump:"#A8F0E8"};
+        return Object.entries(types).filter(([,v])=>v>0).map(([k,v])=>`
+          <div class="stats-row-item">
+            <div class="sri-label">${tLabels[k]}</div>
+            <div class="sri-bar-wrap"><div class="sri-bar" style="width:${total?Math.round(v/total*100):0}%;background:${tColors[k]}"></div></div>
+            <div class="sri-val">${v} <span style="font-size:11px;color:#9B8AAD">(${total?Math.round(v/total*100):0}%)</span></div>
+          </div>
+        `).join("") || `<div class="empty">אין נתונים</div>`;
+      })()}
+    </div>
+  `;
+}
+
 function renderAll(){
   renderHome();
   renderHistory();
   renderVitamins();
   renderMedical();
   renderNotes();
+  renderStats();
   updateAlert();
 }
 
