@@ -41,7 +41,13 @@ input,textarea{font-family:inherit;outline:none;}
 #alert-banner .alert-sub{font-size:12px;color:rgba(255,255,255,.85);margin-top:2px;}
 
 /* FEEDING TIMER */
-#feeding-timer{margin:12px 16px 0;background:#fff;border-radius:20px;padding:14px 18px;display:none;flex-direction:column;gap:10px;box-shadow:0 2px 16px rgba(249,168,201,.25);border:2px solid #F9A8C9;}
+#vitd-banner{margin:10px 16px 0;border-radius:18px;padding:14px 18px;display:none;align-items:center;gap:12px;animation:pulse 2s infinite;background:linear-gradient(135deg,#FFE99A,#FFB347);box-shadow:0 4px 20px rgba(255,179,71,.4);}
+#vitd-banner.show{display:flex;}
+#vitd-banner .vb-icon{font-size:32px;}
+#vitd-banner .vb-text{flex:1;}
+#vitd-banner .vb-title{font-weight:900;color:#3D2B4F;font-size:15px;}
+#vitd-banner .vb-sub{font-size:12px;color:rgba(61,43,79,.7);margin-top:2px;}
+#vitd-banner .vb-btn{background:#3D2B4F;border:none;border-radius:12px;padding:8px 14px;color:#FFE99A;font-weight:900;font-size:13px;cursor:pointer;font-family:inherit;white-space:nowrap;}background:#fff;border-radius:20px;padding:14px 18px;display:none;flex-direction:column;gap:10px;box-shadow:0 2px 16px rgba(249,168,201,.25);border:2px solid #F9A8C9;}
 #feeding-timer.show{display:flex;}
 #feeding-timer .timer-top{display:flex;align-items:center;gap:14px;}
 #feeding-timer .timer-clock{font-size:36px;}
@@ -246,7 +252,15 @@ textarea.inp{resize:vertical;}
   </div>
 </div>
 
-<!-- FEEDING TIMER -->
+<!-- VITAMIN D ALERT -->
+<div id="vitd-banner">
+  <div class="vb-icon">☀️</div>
+  <div class="vb-text">
+    <div class="vb-title" id="vitd-title">זמן ויטמין D!</div>
+    <div class="vb-sub" id="vitd-sub"></div>
+  </div>
+  <button class="vb-btn" onclick="markVitD()">סימנתי ✅</button>
+</div>
 <div id="feeding-timer">
   <div class="timer-top">
     <div class="timer-clock">⏱️</div>
@@ -500,7 +514,56 @@ async function syncNow(){
 }
 
 // ── RENDER ────────────────────────────────────────────────────────────────────
-// ── NOTES ─────────────────────────────────────────────────────────────────────
+// ── VITAMIN D ALERTS ──────────────────────────────────────────────────────────
+// שני מועדים קבועים: 12:00 ו-17:00
+const VITD_TIMES = [
+  {hour:12, label:"מנה ראשונה — 12:00"},
+  {hour:17, label:"מנה שנייה — 17:00"},
+];
+
+function getVitDGivenToday(){
+  const today=todayStr();
+  // ספור כמה פעמים ניתן ויטמין D היום
+  return (DATA.entries||[]).filter(e=>e.category==="vitamin"&&e.key==="vitD"&&e.time.slice(0,10)===today).length;
+}
+
+function updateVitDAlert(){
+  const banner=document.getElementById("vitd-banner");
+  if(!banner)return;
+
+  const now=new Date();
+  const h=now.getHours();
+  const givenToday=getVitDGivenToday();
+
+  let showAlert=false, title="", sub="";
+
+  // חלון ראשון: 00:00–12:00 — רק אם לא ניתנה אף מנה
+  if(h>=0 && h<12 && givenToday===0){
+    showAlert=true;
+    title="☀️ ויטמין D — מנה ראשונה!";
+    sub="תן לפני 12:00 בצהריים";
+  }
+  // חלון שני: 17:00–24:00 — רק אם לא ניתנו 2 מנות
+  else if(h>=17 && givenToday<2){
+    showAlert=true;
+    title=`☀️ ויטמין D — ${givenToday===0?"לא ניתן כלל היום!":"מנה שנייה!"}`;
+    sub=`${givenToday===0?"תן 2 מנות לפני השינה":"מנה שנייה עדיין חסרה"}`;
+  }
+
+  if(showAlert){
+    document.getElementById("vitd-title").textContent=title;
+    document.getElementById("vitd-sub").textContent=sub;
+    banner.classList.add("show"); banner.style.display="";
+  } else {
+    banner.classList.remove("show"); banner.style.display="none";
+  }
+}
+
+function markVitD(){
+  giveVit("vitD");
+  updateVitDAlert();
+  showToast("☀️ ויטמין D סומן!");
+}
 function renderNotes(){
   const notes=DATA.notes||[];
   const el=document.getElementById("notes-list");
@@ -630,9 +693,11 @@ function renderStats(){
   const avg24=avgInterval(f24);
   const avg7=avgInterval(f168);
 
-  // כמות מ"ל ב24 שעות
+  // כמות מ"ל ב24 שעות + ממוצע יומי ב7 ימים
   const ml24=f24.filter(e=>e.ml).reduce((s,e)=>s+(e.ml||0),0);
   const ml7=f168.filter(e=>e.ml).reduce((s,e)=>s+(e.ml||0),0);
+  const daysWithData=new Set(f168.map(e=>e.time.slice(0,10))).size||1;
+  const ml7avg=Math.round(ml7/daysWithData);
 
   // מי האכיל
   const byPerson={};
@@ -675,8 +740,9 @@ function renderStats(){
           <div class="sm-label">מ״ל ב-24 שעות</div>
         </div>
         <div class="stats-mini" style="border-color:#FFE99A">
-          <div class="sm-val" style="color:#FFB347">${ml7}</div>
-          <div class="sm-label">מ״ל ב-7 ימים</div>
+          <div class="sm-val" style="color:#FFB347">${ml7avg}</div>
+          <div class="sm-label">מ״ל ממוצע ליום</div>
+          <div style="font-size:10px;color:#C5B4E8;margin-top:2px">7 ימים אחרונים</div>
         </div>
       </div>
     </div>
@@ -723,6 +789,7 @@ function renderAll(){
   renderNotes();
   renderStats();
   updateAlert();
+  updateVitDAlert();
 }
 
 function renderHome(){
@@ -1413,6 +1480,7 @@ window.addEventListener("fb-ready",loadData,{once:true});
 if(window._fbReady){loadData();}
 setInterval(()=>{if(window._load)loadData();},30000);
 setInterval(updateAlert,60000);
+setInterval(updateVitDAlert,60000);
 </script>
 </body>
 </html>
